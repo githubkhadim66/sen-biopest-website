@@ -1,0 +1,572 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// AUTH & USERS
+// ============================================================
+
+enum Role {
+  ADMIN
+  COMMERCIAL
+  CONSEILLER
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  firstName String   @map("first_name")
+  lastName  String   @map("last_name")
+  role      Role     @default(COMMERCIAL)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  commercialNotes    CommercialRequestNote[]
+  technicalNotes     TechnicalRequestNote[]
+  partnershipNotes   PartnershipRequestNote[]
+  auditLogs          AuditLog[]
+  assignedCommercial CommercialRequest[]      @relation("AssignedCommercial")
+  assignedTechnical  TechnicalRequest[]       @relation("AssignedConseiller")
+  assignedPartnership PartnershipRequest[]    @relation("AssignedPartnership")
+
+  @@map("users")
+}
+
+// ============================================================
+// PRODUCTS
+// ============================================================
+
+model ProductCategory {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  sortOrder   Int       @default(0) @map("sort_order")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  products    Product[]
+
+  @@map("product_categories")
+}
+
+model Product {
+  id               String    @id @default(cuid())
+  name             String
+  slug             String    @unique
+  shortDescription String    @map("short_description")
+  description      String
+  benefits         String[]
+  activeIngredients String[] @map("active_ingredients")
+  dosage           String?
+  applicationMethod String?  @map("application_method")
+  precautions      String?
+  packaging        String?
+  availability     String    @default("Disponible")
+  isFeatured       Boolean   @default(false) @map("is_featured")
+  isPublished      Boolean   @default(true) @map("is_published")
+  sortOrder        Int       @default(0) @map("sort_order")
+  metaTitle        String?   @map("meta_title")
+  metaDescription  String?   @map("meta_description")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  categoryId String?          @map("category_id")
+  category   ProductCategory? @relation(fields: [categoryId], references: [id])
+  images     ProductImage[]
+  crops      CropOnProduct[]
+  pests      PestOnProduct[]
+  tags       TagOnProduct[]
+  faq        ProductFaq[]
+
+  @@map("products")
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  url       String
+  alt       String?
+  isPrimary Boolean @default(false) @map("is_primary")
+  sortOrder Int     @default(0) @map("sort_order")
+
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_images")
+}
+
+model ProductFaq {
+  id        String @id @default(cuid())
+  question  String
+  answer    String
+  sortOrder Int    @default(0) @map("sort_order")
+
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_faqs")
+}
+
+// ============================================================
+// TAXONOMY: CROPS, PESTS, TAGS
+// ============================================================
+
+model Crop {
+  id       String          @id @default(cuid())
+  name     String          @unique
+  slug     String          @unique
+  products CropOnProduct[]
+
+  @@map("crops")
+}
+
+model CropOnProduct {
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cropId    String  @map("crop_id")
+  crop      Crop    @relation(fields: [cropId], references: [id], onDelete: Cascade)
+
+  @@id([productId, cropId])
+  @@map("crop_on_products")
+}
+
+model Pest {
+  id       String          @id @default(cuid())
+  name     String          @unique
+  slug     String          @unique
+  products PestOnProduct[]
+
+  @@map("pests")
+}
+
+model PestOnProduct {
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  pestId    String  @map("pest_id")
+  pest      Pest    @relation(fields: [pestId], references: [id], onDelete: Cascade)
+
+  @@id([productId, pestId])
+  @@map("pest_on_products")
+}
+
+model Tag {
+  id       String         @id @default(cuid())
+  name     String         @unique
+  slug     String         @unique
+  products TagOnProduct[]
+
+  @@map("tags")
+}
+
+model TagOnProduct {
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  tagId     String  @map("tag_id")
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([productId, tagId])
+  @@map("tag_on_products")
+}
+
+// ============================================================
+// COMMERCIAL REQUESTS (devis, commande, rappel, info)
+// ============================================================
+
+enum CommercialRequestType {
+  DEVIS
+  COMMANDE
+  RAPPEL
+  INFORMATION
+  ECHANTILLON
+}
+
+enum CommercialRequestStatus {
+  NOUVEAU
+  EN_COURS
+  RELANCE
+  CONVERTI
+  ANNULE
+}
+
+enum ActorType {
+  PRODUCTEUR
+  COOPERATIVE
+  GIE
+  JARDINIER
+  INSTITUTION
+  ENTREPRISE
+  PARTICULIER
+  AUTRE
+}
+
+model CommercialRequest {
+  id              String                  @id @default(cuid())
+  type            CommercialRequestType
+  status          CommercialRequestStatus @default(NOUVEAU)
+  firstName       String                  @map("first_name")
+  lastName        String                  @map("last_name")
+  phone           String
+  email           String?
+  organization    String?
+  actorType       ActorType               @default(PRODUCTEUR) @map("actor_type")
+  locality        String?
+  region          String?
+  productInterest String?                 @map("product_interest")
+  quantity        String?
+  cropConcerned   String?                 @map("crop_concerned")
+  message         String?
+  consent         Boolean                 @default(false)
+  source          String?
+  createdAt       DateTime                @default(now()) @map("created_at")
+  updatedAt       DateTime                @updatedAt @map("updated_at")
+
+  assignedToId String? @map("assigned_to_id")
+  assignedTo   User?   @relation("AssignedCommercial", fields: [assignedToId], references: [id])
+  notes        CommercialRequestNote[]
+
+  @@map("commercial_requests")
+}
+
+model CommercialRequestNote {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  requestId String            @map("request_id")
+  request   CommercialRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  authorId  String            @map("author_id")
+  author    User              @relation(fields: [authorId], references: [id])
+
+  @@map("commercial_request_notes")
+}
+
+// ============================================================
+// TECHNICAL REQUESTS (accompagnement technique)
+// ============================================================
+
+enum TechnicalRequestStatus {
+  NOUVEAU
+  EN_COURS
+  TRAITE
+  CLOTURE
+}
+
+model TechnicalRequest {
+  id           String                 @id @default(cuid())
+  status       TechnicalRequestStatus @default(NOUVEAU)
+  firstName    String                 @map("first_name")
+  lastName     String                 @map("last_name")
+  phone        String
+  email        String?
+  organization String?
+  actorType    ActorType              @default(PRODUCTEUR) @map("actor_type")
+  locality     String?
+  region       String?
+  crop         String
+  cropStage    String?                @map("crop_stage")
+  symptoms     String
+  description  String?
+  consent      Boolean                @default(false)
+  createdAt    DateTime               @default(now()) @map("created_at")
+  updatedAt    DateTime               @updatedAt @map("updated_at")
+
+  assignedToId String? @map("assigned_to_id")
+  assignedTo   User?   @relation("AssignedConseiller", fields: [assignedToId], references: [id])
+  photos       TechnicalRequestPhoto[]
+  notes        TechnicalRequestNote[]
+
+  @@map("technical_requests")
+}
+
+model TechnicalRequestPhoto {
+  id        String @id @default(cuid())
+  url       String
+  filename  String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  requestId String           @map("request_id")
+  request   TechnicalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@map("technical_request_photos")
+}
+
+model TechnicalRequestNote {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  requestId String           @map("request_id")
+  request   TechnicalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  authorId  String           @map("author_id")
+  author    User             @relation(fields: [authorId], references: [id])
+
+  @@map("technical_request_notes")
+}
+
+// ============================================================
+// TRAININGS
+// ============================================================
+
+enum TrainingModality {
+  PRESENTIEL
+  EN_LIGNE
+  HYBRIDE
+}
+
+model Training {
+  id            String            @id @default(cuid())
+  title         String
+  slug          String            @unique
+  description   String
+  objectives    String[]
+  targetAudience String           @map("target_audience")
+  duration      String?
+  modality      TrainingModality  @default(PRESENTIEL)
+  location      String?
+  date          DateTime?
+  endDate       DateTime?         @map("end_date")
+  price         String?
+  maxParticipants Int?            @map("max_participants")
+  isPublished   Boolean           @default(true) @map("is_published")
+  metaTitle     String?           @map("meta_title")
+  metaDescription String?        @map("meta_description")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+
+  registrations TrainingRegistration[]
+  documents     TrainingDocument[]
+
+  @@map("trainings")
+}
+
+enum RegistrationStatus {
+  INSCRIT
+  CONFIRME
+  PRESENT
+  ABSENT
+  ANNULE
+}
+
+model TrainingRegistration {
+  id           String             @id @default(cuid())
+  status       RegistrationStatus @default(INSCRIT)
+  firstName    String             @map("first_name")
+  lastName     String             @map("last_name")
+  phone        String
+  email        String?
+  organization String?
+  actorType    ActorType          @default(PRODUCTEUR) @map("actor_type")
+  locality     String?
+  region       String?
+  motivation   String?
+  consent      Boolean            @default(false)
+  createdAt    DateTime           @default(now()) @map("created_at")
+  updatedAt    DateTime           @updatedAt @map("updated_at")
+
+  trainingId String   @map("training_id")
+  training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+
+  @@map("training_registrations")
+}
+
+model TrainingDocument {
+  id        String   @id @default(cuid())
+  title     String
+  url       String
+  filename  String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  trainingId String   @map("training_id")
+  training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+
+  @@map("training_documents")
+}
+
+// ============================================================
+// PARTNERSHIP REQUESTS
+// ============================================================
+
+enum PartnerType {
+  FOURNISSEUR
+  DISTRIBUTEUR
+  INSTITUTION
+  LABORATOIRE
+  FINANCEUR
+  PROGRAMME
+  ACHETEUR
+  AUTRE
+}
+
+enum PartnershipStatus {
+  NOUVEAU
+  QUALIFIE
+  EN_DISCUSSION
+  ACCEPTE
+  REFUSE
+}
+
+model PartnershipRequest {
+  id              String            @id @default(cuid())
+  status          PartnershipStatus @default(NOUVEAU)
+  partnerType     PartnerType       @map("partner_type")
+  organizationName String           @map("organization_name")
+  contactName     String            @map("contact_name")
+  phone           String
+  email           String?
+  website         String?
+  locality        String?
+  region          String?
+  proposal        String
+  objectives      String?
+  consent         Boolean           @default(false)
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  assignedToId String? @map("assigned_to_id")
+  assignedTo   User?   @relation("AssignedPartnership", fields: [assignedToId], references: [id])
+  notes        PartnershipRequestNote[]
+
+  @@map("partnership_requests")
+}
+
+model PartnershipRequestNote {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  requestId String             @map("request_id")
+  request   PartnershipRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  authorId  String             @map("author_id")
+  author    User               @relation(fields: [authorId], references: [id])
+
+  @@map("partnership_request_notes")
+}
+
+// ============================================================
+// CONTACT REQUESTS (generic contact form)
+// ============================================================
+
+model ContactRequest {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  email     String?
+  subject   String?
+  message   String
+  consent   Boolean  @default(false)
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("contact_requests")
+}
+
+// ============================================================
+// CMS: CONTENT BLOCKS, FAQ, TESTIMONIALS, SETTINGS
+// ============================================================
+
+model ContentBlock {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  title     String?
+  content   String?
+  imageUrl  String?  @map("image_url")
+  linkUrl   String?  @map("link_url")
+  linkText  String?  @map("link_text")
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  metadata  Json?
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("content_blocks")
+}
+
+model Faq {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  category  String?
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("faqs")
+}
+
+model Testimonial {
+  id           String   @id @default(cuid())
+  authorName   String   @map("author_name")
+  authorRole   String?  @map("author_role")
+  authorLocation String? @map("author_location")
+  content      String
+  imageUrl     String?  @map("image_url")
+  rating       Int?
+  isActive     Boolean  @default(true) @map("is_active")
+  sortOrder    Int      @default(0) @map("sort_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("testimonials")
+}
+
+model SiteSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+  label String?
+
+  @@map("site_settings")
+}
+
+// ============================================================
+// MEDIA & AUDIT
+// ============================================================
+
+model MediaAsset {
+  id        String   @id @default(cuid())
+  filename  String
+  url       String
+  mimeType  String   @map("mime_type")
+  size      Int
+  alt       String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("media_assets")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  details    Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+
+// ============================================================
+// ANALYTICS: CTA CLICK TRACKING
+// ============================================================
+
+model CtaClick {
+  id        String   @id @default(cuid())
+  ctaType   String   @map("cta_type")
+  page      String
+  productId String?  @map("product_id")
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([ctaType])
+  @@index([page])
+  @@map("cta_clicks")
+}

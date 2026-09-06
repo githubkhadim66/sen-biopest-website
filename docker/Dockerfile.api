@@ -1,0 +1,31 @@
+FROM node:20-alpine AS base
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+
+FROM base AS deps
+WORKDIR /app
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+COPY apps/api/package.json apps/api/
+COPY packages/types/package.json packages/types/
+COPY prisma/package.json prisma/
+RUN pnpm install --frozen-lockfile || pnpm install
+
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=deps /app/packages/types/node_modules ./packages/types/node_modules || true
+COPY --from=deps /app/prisma/node_modules ./prisma/node_modules
+COPY . .
+RUN cd prisma && npx prisma generate
+RUN cd apps/api && npx nest build
+
+FROM base AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=builder /app/apps/api/dist ./dist
+COPY --from=builder /app/apps/api/node_modules ./node_modules
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/prisma/schema.prisma ./prisma/schema.prisma
+RUN mkdir -p uploads
+EXPOSE 3001
+CMD ["node", "dist/main"]
