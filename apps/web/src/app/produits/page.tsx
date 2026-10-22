@@ -15,7 +15,6 @@ import {
   Star,
   Bug,
   Wheat,
-  Package,
   ArrowRight,
 } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -165,7 +164,7 @@ function FilterSidebar({
       <Select
         id="filter-category"
         label="Categorie"
-        placeholder="Toutes les categories"
+        placeholder="Toutes les catégories"
         options={categoryOptions}
         value={category}
         onChange={(e) => onCategoryChange(e.target.value)}
@@ -192,7 +191,7 @@ function FilterSidebar({
       <Select
         id="filter-availability"
         label="Disponibilite"
-        placeholder="Toute disponibilite"
+        placeholder="Toute disponibilité"
         options={AVAILABILITY_OPTIONS}
         value={availability}
         onChange={(e) => onAvailabilityChange(e.target.value)}
@@ -357,7 +356,7 @@ function FeaturedProductHighlight({ product }: { product: Product }) {
               <Button
                 onClick={() => trackClick('view_product', product.slug)}
               >
-                Decouvrir <ArrowRight className="w-4 h-4" />
+                Découvrir <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
             <Link
@@ -524,16 +523,17 @@ export default function ProduitsPage() {
       <section className="bg-gradient-to-br from-primary-50 via-white to-green-50">
         <div className="container-wide py-12 sm:py-16 lg:py-20">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-primary-100 text-primary-700 text-sm font-medium px-3 py-1 rounded-full mb-4">
-              <Package className="w-4 h-4" />
-              Catalogue produits
-            </div>
+            <nav aria-label="Fil d'Ariane" className="text-sm text-gray-500 mb-4">
+              <Link href="/" className="hover:text-gray-800">Accueil</Link>
+              <span className="mx-2" aria-hidden="true">/</span>
+              <span className="text-gray-700">Produits</span>
+            </nav>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-4">
               Nos <span className="text-primary-600">biopesticides</span> naturels
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl">
-              Decouvrez notre gamme de biopesticides a base de plantes locales
-              senegalaises. Des solutions naturelles et efficaces pour proteger
+              Découvrez notre gamme de biopesticides à base de plantes locales
+              sénégalaises. Des solutions naturelles et efficaces pour protéger
               vos cultures.
             </p>
           </div>
@@ -614,7 +614,7 @@ export default function ProduitsPage() {
                     className="w-full"
                     onClick={() => setMobileFiltersOpen(false)}
                   >
-                    Voir les resultats
+                    Voir les résultats
                   </Button>
                 </div>
               </div>
@@ -683,7 +683,7 @@ export default function ProduitsPage() {
                     size="sm"
                     onClick={() => window.location.reload()}
                   >
-                    Reessayer
+                    Réessayer
                   </Button>
                 </div>
               )}
@@ -743,9 +743,9 @@ export default function ProduitsPage() {
               Vous ne trouvez pas ce que vous cherchez ?
             </h2>
             <p className="text-primary-100 max-w-xl mx-auto mb-6">
-              Contactez-nous pour un conseil personnalise ou un devis sur
-              mesure. Nous pouvons formuler des solutions adaptees a vos besoins
-              specifiques.
+              Contactez-nous pour un conseil personnalisé ou un devis sur
+              mesure. Nous pouvons formuler des solutions adaptées à vos besoins
+              spécifiques.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               <Link
@@ -759,7 +759,7 @@ export default function ProduitsPage() {
               <a
                 href={getWhatsAppUrl(
                   WHATSAPP_NUMBER,
-                  'Bonjour Sen Biopest, je souhaite un conseil personnalise sur vos produits.',
+                  'Bonjour Sen Biopest, je souhaite un conseil personnalisé sur vos produits.',
                 )}
                 target="_blank"
                 rel="noopener noreferrer"

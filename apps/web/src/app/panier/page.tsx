@@ -140,10 +140,10 @@ export default function PanierPage() {
             <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-3">
-            Commande envoyee avec succes !
+            Commande envoyée avec succès !
           </h1>
           <p className="text-gray-600 mb-8 max-w-md mx-auto">
-            Votre commande a ete enregistree. Notre equipe vous contactera sous 24h pour confirmer les details et la livraison.
+            Votre commande a été enregistrée. Notre équipe vous contactera sous 24h pour confirmer les détails et la livraison.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link href="/produits">
@@ -309,7 +309,7 @@ export default function PanierPage() {
                     required
                     value={form.firstName}
                     onChange={(e) => updateForm('firstName', e.target.value)}
-                    placeholder="Votre prenom"
+                    placeholder="Votre prénom"
                   />
                   <Input
                     id="lastName"
@@ -338,10 +338,10 @@ export default function PanierPage() {
                   />
                   <Select
                     id="actorType"
-                    label="Vous etes"
+                    label="Vous êtes"
                     required
                     options={ACTOR_TYPES}
-                    placeholder="Selectionnez votre profil"
+                    placeholder="Sélectionnez votre profil"
                     value={form.actorType}
                     onChange={(e) => updateForm('actorType', e.target.value)}
                   />
@@ -356,7 +356,7 @@ export default function PanierPage() {
                     id="region"
                     label="Region"
                     options={REGIONS}
-                    placeholder="Selectionnez votre region"
+                    placeholder="Sélectionnez votre région"
                     value={form.region}
                     onChange={(e) => updateForm('region', e.target.value)}
                   />

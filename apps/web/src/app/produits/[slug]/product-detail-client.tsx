@@ -626,7 +626,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
         <section className="section-padding bg-gray-50">
           <div className="container-narrow">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
-              Questions frequentes
+              Questions fréquentes
             </h2>
             <FAQAccordion faq={product.faq} />
           </div>

@@ -136,7 +136,7 @@ export default function CommandesPage() {
       await api.put(`/commercial-requests/${id}/status`, { status: newStatus });
       fetchOrders();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erreur lors de la mise a jour');
+      setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour');
     }
   }
 
@@ -194,7 +194,7 @@ export default function CommandesPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Rechercher par nom, telephone, produit..."
+                placeholder="Rechercher par nom, téléphone, produit..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
@@ -216,7 +216,7 @@ export default function CommandesPage() {
           ) : orders.length === 0 ? (
             <div className="text-center py-12 text-gray-500 text-sm">
               <ShoppingCart className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-              {search || statusFilter ? 'Aucune commande trouvee pour ces criteres.' : 'Aucune commande pour le moment.'}
+              {search || statusFilter ? 'Aucune commande trouvée pour ces critères.' : 'Aucune commande pour le moment.'}
             </div>
           ) : (
             <table className="w-full text-sm">
@@ -227,7 +227,7 @@ export default function CommandesPage() {
                   <th className="px-5 py-3">Produits</th>
                   <th className="px-5 py-3">Qte</th>
                   <th className="px-5 py-3">Statut</th>
-                  <th className="px-5 py-3">Region</th>
+                  <th className="px-5 py-3">Région</th>
                   <th className="px-5 py-3">Date</th>
                   <th className="px-5 py-3">Actions</th>
                 </tr>
@@ -314,7 +314,7 @@ export default function CommandesPage() {
 
                             {/* Order info */}
                             <div className="space-y-3">
-                              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Details commande</h4>
+                              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Détails commande</h4>
                               <div className="space-y-2 text-sm">
                                 <div className="flex items-start gap-2">
                                   <Package className="h-4 w-4 text-gray-400 mt-0.5" />

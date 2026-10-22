@@ -31,7 +31,6 @@ export function WhatsAppButton() {
     >
       <MessageCircle className="w-6 h-6" />
       <span className="hidden sm:inline font-semibold">WhatsApp</span>
-      <span className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-20 pointer-events-none" />
     </a>
   );
 }

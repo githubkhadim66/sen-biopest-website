@@ -317,7 +317,7 @@ export default function AdminDashboardPage() {
           {/* Requests by region */}
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold text-gray-900">Par region</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Par région</h2>
             </CardHeader>
             <CardBody className="space-y-3">
               {stats.requestsByRegion.map((region) => (

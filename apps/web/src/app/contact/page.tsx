@@ -127,10 +127,11 @@ export default function ContactPage() {
       <section className="relative bg-gradient-to-br from-primary-50 via-white to-green-50 overflow-hidden">
         <div className="container-wide py-16 sm:py-20 lg:py-24">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-primary-100 text-primary-700 text-sm font-medium px-3 py-1 rounded-full mb-6">
-              <Mail className="w-4 h-4" />
-              Contact
-            </div>
+            <nav aria-label="Fil d'Ariane" className="text-sm text-gray-500 mb-4">
+              <Link href="/" className="hover:text-gray-800">Accueil</Link>
+              <span className="mx-2" aria-hidden="true">/</span>
+              <span className="text-gray-700">Contact</span>
+            </nav>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-6">
               Contactez-nous
             </h1>

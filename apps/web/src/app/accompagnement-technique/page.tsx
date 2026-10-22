@@ -11,7 +11,6 @@ import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardBody } from '@/components/ui/card';
 import {
-  Sprout,
   CheckCircle,
   Camera,
   Upload,
@@ -36,17 +35,17 @@ const actorTypeLabels: Record<string, string> = {
 };
 
 const technicalSchema = z.object({
-  firstName: z.string().min(2, 'Le prenom est requis'),
+  firstName: z.string().min(2, 'Le prénom est requis'),
   lastName: z.string().min(2, 'Le nom est requis'),
-  phone: z.string().min(9, 'Numero de telephone invalide'),
+  phone: z.string().min(9, 'Numéro de téléphone invalide'),
   email: z.string().email('Email invalide').optional().or(z.literal('')),
   organization: z.string().optional(),
-  actorType: z.nativeEnum(ActorType, { errorMap: () => ({ message: 'Selectionnez un type' }) }),
+  actorType: z.nativeEnum(ActorType, { errorMap: () => ({ message: 'Sélectionnez un type' }) }),
   locality: z.string().optional(),
   region: z.string().optional(),
   crop: z.string().min(2, 'Indiquez la culture concernee'),
   cropStage: z.string().optional(),
-  symptoms: z.string().min(10, 'Decrivez les symptomes observes (min. 10 caracteres)'),
+  symptoms: z.string().min(10, 'Décrivez les symptomes observes (min. 10 caracteres)'),
   description: z.string().optional(),
   consent: z.literal(true, {
     errorMap: () => ({ message: 'Vous devez accepter les conditions' }),
@@ -114,17 +113,18 @@ export default function AccompagnementTechniquePage() {
       <section className="bg-gradient-to-br from-primary-50 via-white to-green-50">
         <div className="container-wide py-12 sm:py-16 lg:py-20">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-primary-100 text-primary-700 text-sm font-medium px-3 py-1 rounded-full mb-4">
-              <Sprout className="w-4 h-4" />
-              Accompagnement technique
-            </div>
+            <nav aria-label="Fil d'Ariane" className="text-sm text-gray-500 mb-4">
+              <Link href="/" className="hover:text-gray-800">Accueil</Link>
+              <span className="mx-2" aria-hidden="true">/</span>
+              <span className="text-gray-700">Accompagnement technique</span>
+            </nav>
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Un probleme sur vos cultures ? Nous sommes la pour vous aider
+              Un problème sur vos cultures ? Nous sommes là pour vous aider
             </h1>
             <p className="text-lg text-gray-600">
               Nos conseillers techniques vous accompagnent pour identifier les ravageurs,
-              diagnostiquer les problemes phytosanitaires et vous proposer des solutions
-              biologiques adaptees.
+              diagnostiquer les problèmes phytosanitaires et vous proposer des solutions
+              biologiques adaptées.
             </p>
           </div>
         </div>
@@ -134,29 +134,29 @@ export default function AccompagnementTechniquePage() {
       <section className="section-padding bg-white">
         <div className="container-wide">
           <h2 className="text-2xl font-bold text-gray-900 text-center mb-10">
-            Comment ca marche ?
+            Comment ça marche ?
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
                 icon: Bug,
-                title: 'Decrivez le probleme',
+                title: 'Décrivez le problème',
                 desc: 'Indiquez la culture, les symptomes observes et le stade de la culture.',
               },
               {
                 icon: Camera,
                 title: 'Ajoutez une photo',
-                desc: 'Prenez une photo des degats pour aider notre equipe a diagnostiquer.',
+                desc: 'Prenez une photo des dégâts pour aider notre équipe a diagnostiquer.',
               },
               {
                 icon: Search,
                 title: 'Diagnostic expert',
-                desc: 'Nos conseillers analysent votre demande et identifient le probleme.',
+                desc: 'Nos conseillers analysent votre demande et identifient le problème.',
               },
               {
                 icon: ClipboardCheck,
-                title: 'Solution personnalisee',
-                desc: 'Recevez des recommandations adaptees et un suivi de votre situation.',
+                title: 'Solution personnalisée',
+                desc: 'Recevez des recommandations adaptées et un suivi de votre situation.',
               },
             ].map((step) => (
               <Card key={step.title}>
@@ -181,7 +181,7 @@ export default function AccompagnementTechniquePage() {
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Demande envoyee !</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Demande envoyée !</h2>
               <p className="text-gray-600 mb-6">
                 Votre demande d&apos;accompagnement technique a bien ete enregistree.
                 Un conseiller vous contactera dans les plus brefs delais pour vous aider.
@@ -202,7 +202,7 @@ export default function AccompagnementTechniquePage() {
                   Demander un accompagnement
                 </h2>
                 <p className="text-gray-600">
-                  Remplissez le formulaire et notre equipe vous repondra rapidement.
+                  Remplissez le formulaire et notre équipe vous répondra rapidement.
                 </p>
               </div>
 
@@ -225,7 +225,7 @@ export default function AccompagnementTechniquePage() {
                           <Input
                             label="Prenom"
                             id="firstName"
-                            placeholder="Votre prenom"
+                            placeholder="Votre prénom"
                             required
                             error={errors.firstName?.message}
                             {...register('firstName')}
@@ -272,7 +272,7 @@ export default function AccompagnementTechniquePage() {
                           label="Type d'acteur"
                           id="actorType"
                           required
-                          placeholder="Selectionnez votre profil"
+                          placeholder="Sélectionnez votre profil"
                           options={Object.entries(actorTypeLabels).map(([value, label]) => ({
                             value,
                             label,
@@ -292,7 +292,7 @@ export default function AccompagnementTechniquePage() {
                           <Select
                             label="Region"
                             id="region"
-                            placeholder="Selectionnez une region"
+                            placeholder="Sélectionnez une région"
                             options={SENEGAL_REGIONS.map((r) => ({ value: r, label: r }))}
                             error={errors.region?.message}
                             {...register('region')}
@@ -304,7 +304,7 @@ export default function AccompagnementTechniquePage() {
                     {/* Technical Info */}
                     <div>
                       <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">
-                        Informations sur le probleme
+                        Informations sur le problème
                       </h3>
                       <div className="space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -328,7 +328,7 @@ export default function AccompagnementTechniquePage() {
                         <Textarea
                           label="Symptomes observes"
                           id="symptoms"
-                          placeholder="Decrivez les symptomes que vous observez sur vos plantes..."
+                          placeholder="Décrivez les symptomes que vous observez sur vos plantes..."
                           required
                           error={errors.symptoms?.message}
                           {...register('symptoms')}
@@ -337,7 +337,7 @@ export default function AccompagnementTechniquePage() {
                         <Textarea
                           label="Description complementaire"
                           id="description"
-                          placeholder="Informations supplementaires (traitements deja effectues, date d'apparition, etc.)"
+                          placeholder="Informations supplémentaires (traitements déjà effectués, date d'apparition, etc.)"
                           error={errors.description?.message}
                           {...register('description')}
                         />
@@ -345,7 +345,7 @@ export default function AccompagnementTechniquePage() {
                         {/* Photo upload */}
                         <div className="space-y-1">
                           <label className="block text-sm font-medium text-gray-700">
-                            Photo des degats
+                            Photo des dégâts
                           </label>
                           {photoPreview ? (
                             <div className="relative inline-block">

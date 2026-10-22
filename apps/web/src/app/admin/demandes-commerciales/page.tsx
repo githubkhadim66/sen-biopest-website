@@ -146,7 +146,7 @@ export default function DemandesCommercialesPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Rechercher par nom, email, telephone..."
+                placeholder="Rechercher par nom, email, téléphone..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
@@ -173,7 +173,7 @@ export default function DemandesCommercialesPage() {
             </div>
           ) : requests.length === 0 ? (
             <div className="text-center py-12 text-gray-500 text-sm">
-              {search || statusFilter || typeFilter ? 'Aucune demande trouvee pour ces criteres.' : 'Aucune demande commerciale.'}
+              {search || statusFilter || typeFilter ? 'Aucune demande trouvée pour ces critères.' : 'Aucune demande commerciale.'}
             </div>
           ) : (
             <table className="w-full text-sm">
@@ -183,7 +183,7 @@ export default function DemandesCommercialesPage() {
                   <th className="px-5 py-3">Nom</th>
                   <th className="px-5 py-3">Type</th>
                   <th className="px-5 py-3">Statut</th>
-                  <th className="px-5 py-3">Region</th>
+                  <th className="px-5 py-3">Région</th>
                   <th className="px-5 py-3">Assigne a</th>
                   <th className="px-5 py-3">Date</th>
                 </tr>
