@@ -6,7 +6,8 @@
 **/.env
 **/.env.*
 !.env.example
-**/uploads
+/uploads
+apps/api/uploads
 .git
 .claude
 .vscode
