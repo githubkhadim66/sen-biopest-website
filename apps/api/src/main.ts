@@ -49,7 +49,8 @@ async function bootstrap() {
     .split(',')
     .map((o) => o.trim())
     .filter(Boolean);
-  app.enableCors({ origin: origins, credentials: true });
+  // maxAge: browsers cache the CORS preflight instead of sending an OPTIONS before every call
+  app.enableCors({ origin: origins, credentials: true, maxAge: 7200 });
 
   app.useGlobalPipes(
     new BlankStringsPipe(),

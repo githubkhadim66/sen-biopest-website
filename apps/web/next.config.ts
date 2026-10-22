@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: join(__dirname, '../../'),
   poweredByHeader: false,
   compress: true,
+  // Dev only: keep compiled pages in memory instead of recompiling them after 1 min idle
+  onDemandEntries: { maxInactiveAge: 60 * 60 * 1000, pagesBufferLength: 50 },
   experimental: {
     // Only bundle the icons / animation helpers actually used (smaller JS, faster dev compiles)
     optimizePackageImports: ['lucide-react', 'framer-motion'],
