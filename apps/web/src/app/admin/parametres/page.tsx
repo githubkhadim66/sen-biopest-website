@@ -7,81 +7,89 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
-import { Loader2, Plus, Edit2, Trash2, X, Save, ChevronDown, ChevronUp } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ErrorAlert, SuccessAlert } from '@/components/admin/alerts';
+import { Loader2, Plus, Edit2, Trash2, X, Save, Eye, EyeOff, Star } from 'lucide-react';
 
-interface SiteSettings {
-  whatsappNumber: string;
-  companyName: string;
-  companyEmail: string;
-  companyPhone: string;
-  companyAddress: string;
+interface Setting {
+  key: string;
+  value: string;
+  label: string | null;
 }
 
-interface FAQ {
+interface Faq {
   id: string;
   question: string;
   answer: string;
-  order: number;
+  category: string | null;
+  sortOrder: number;
+  isActive: boolean;
 }
 
 interface Testimonial {
   id: string;
-  name: string;
-  role: string;
+  authorName: string;
+  authorRole: string | null;
+  authorLocation: string | null;
   content: string;
-  rating: number;
-  published: boolean;
+  rating: number | null;
+  sortOrder: number;
+  isActive: boolean;
 }
 
+const SETTING_FIELDS = [
+  { key: 'whatsapp_number', label: 'Numéro WhatsApp', placeholder: '+221 77 000 00 00', type: 'tel' },
+  { key: 'company_phone', label: 'Téléphone', placeholder: '+221 33 000 00 00', type: 'tel' },
+  { key: 'company_email', label: 'Email de contact', placeholder: 'contact@senbiopest.com', type: 'email' },
+  { key: 'company_address', label: 'Adresse', placeholder: 'Dakar, Sénégal', type: 'text' },
+] as const;
+
+const EMPTY_FAQ = { question: '', answer: '', category: '', sortOrder: 0, isActive: true };
+const EMPTY_TESTIMONIAL = {
+  authorName: '',
+  authorRole: '',
+  authorLocation: '',
+  content: '',
+  rating: 5,
+  sortOrder: 0,
+  isActive: true,
+};
+
+type Tab = 'settings' | 'faq' | 'testimonials';
+
 export default function ParametresAdminPage() {
-  const [activeTab, setActiveTab] = useState<'settings' | 'faq' | 'testimonials'>('settings');
+  const [tab, setTab] = useState<Tab>('settings');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Site settings
-  const [settings, setSettings] = useState<SiteSettings>({
-    whatsappNumber: '',
-    companyName: '',
-    companyEmail: '',
-    companyPhone: '',
-    companyAddress: '',
-  });
+  const [settings, setSettings] = useState<Record<string, string>>({});
   const [savingSettings, setSavingSettings] = useState(false);
 
-  // FAQ
-  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [faqs, setFaqs] = useState<Faq[]>([]);
+  const [faqForm, setFaqForm] = useState(EMPTY_FAQ);
+  const [editingFaqId, setEditingFaqId] = useState<string | null>(null);
   const [showFaqForm, setShowFaqForm] = useState(false);
-  const [editingFaq, setEditingFaq] = useState<FAQ | null>(null);
-  const [faqForm, setFaqForm] = useState({ question: '', answer: '', order: 0 });
   const [savingFaq, setSavingFaq] = useState(false);
 
-  // Testimonials
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
-  const [showTestimonialForm, setShowTestimonialForm] = useState(false);
-  const [editingTestimonial, setEditingTestimonial] = useState<Testimonial | null>(null);
-  const [testimonialForm, setTestimonialForm] = useState({
-    name: '',
-    role: '',
-    content: '',
-    rating: 5,
-    published: true,
-  });
-  const [savingTestimonial, setSavingTestimonial] = useState(false);
+  const [tForm, setTForm] = useState(EMPTY_TESTIMONIAL);
+  const [editingTId, setEditingTId] = useState<string | null>(null);
+  const [showTForm, setShowTForm] = useState(false);
+  const [savingT, setSavingT] = useState(false);
 
   const fetchAll = useCallback(async () => {
     try {
-      setLoading(true);
       setError('');
-      const [settingsData, faqData, testimonialsData] = await Promise.all([
-        api.get<{ settings: SiteSettings }>('/content/settings').catch(() => ({ settings: settings })),
-        api.get<{ faqs: FAQ[] }>('/content/faqs').catch(() => ({ faqs: [] })),
-        api.get<{ testimonials: Testimonial[] }>('/content/testimonials').catch(() => ({ testimonials: [] })),
+      const [settingsData, faqData, testimonialData] = await Promise.all([
+        api.get<Setting[]>('/content/settings'),
+        api.get<Faq[]>('/content/admin/faqs'),
+        api.get<Testimonial[]>('/content/admin/testimonials'),
       ]);
-      if (settingsData.settings) setSettings(settingsData.settings);
-      setFaqs(faqData.faqs || []);
-      setTestimonials(testimonialsData.testimonials || []);
-    } catch (err: unknown) {
+      setSettings(Object.fromEntries(settingsData.map((s) => [s.key, s.value])));
+      setFaqs(faqData);
+      setTestimonials(testimonialData);
+    } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement');
     } finally {
       setLoading(false);
@@ -92,202 +100,187 @@ export default function ParametresAdminPage() {
     fetchAll();
   }, [fetchAll]);
 
-  function showMessage(msg: string) {
-    setSuccess(msg);
-    setTimeout(() => setSuccess(''), 3000);
-  }
-
-  // Settings handlers
+  // ---------------- Settings ----------------
   async function handleSaveSettings(e: React.FormEvent) {
     e.preventDefault();
     setSavingSettings(true);
+    setError('');
     try {
-      await api.put('/content/settings', settings);
-      showMessage('Paramètres enregistrés.');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erreur');
+      const values = Object.fromEntries(SETTING_FIELDS.map((f) => [f.key, settings[f.key] ?? '']));
+      const saved = await api.put<Setting[]>('/content/settings', { values });
+      setSettings(Object.fromEntries(saved.map((s) => [s.key, s.value])));
+      setSuccess('Informations enregistrées.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur lors de l'enregistrement");
     } finally {
       setSavingSettings(false);
     }
   }
 
-  // FAQ handlers
-  function openFaqCreate() {
-    setEditingFaq(null);
-    setFaqForm({ question: '', answer: '', order: faqs.length });
-    setShowFaqForm(true);
-  }
-
-  function openFaqEdit(faq: FAQ) {
-    setEditingFaq(faq);
-    setFaqForm({ question: faq.question, answer: faq.answer, order: faq.order });
+  // ---------------- FAQ ----------------
+  function openFaq(faq?: Faq) {
+    setEditingFaqId(faq?.id ?? null);
+    setFaqForm(
+      faq
+        ? { question: faq.question, answer: faq.answer, category: faq.category || '', sortOrder: faq.sortOrder, isActive: faq.isActive }
+        : { ...EMPTY_FAQ, sortOrder: faqs.length },
+    );
     setShowFaqForm(true);
   }
 
   async function handleFaqSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSavingFaq(true);
+    setError('');
     try {
-      if (editingFaq) {
-        await api.put(`/content/faqs/${editingFaq.id}`, faqForm);
+      const payload = { ...faqForm, sortOrder: Number(faqForm.sortOrder) || 0 };
+      if (editingFaqId) {
+        const updated = await api.put<Faq>(`/content/faqs/${editingFaqId}`, payload);
+        setFaqs((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
       } else {
-        await api.post('/content/faqs', faqForm);
+        const created = await api.post<Faq>('/content/faqs', payload);
+        setFaqs((prev) => [...prev, created]);
       }
+      setFaqs((prev) => [...prev].sort((a, b) => a.sortOrder - b.sortOrder));
       setShowFaqForm(false);
-      fetchAll();
-      showMessage(editingFaq ? 'FAQ modifiée.' : 'FAQ ajoutée.');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erreur');
+      setSuccess('Question enregistrée.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur lors de l'enregistrement");
     } finally {
       setSavingFaq(false);
     }
   }
 
-  async function handleDeleteFaq(faq: FAQ) {
-    if (!confirm(`Supprimer cette FAQ ?`)) return;
+  async function toggleFaq(faq: Faq) {
     try {
-      await api.delete(`/content/faqs/${faq.id}`);
-      fetchAll();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erreur');
+      const updated = await api.put<Faq>(`/content/faqs/${faq.id}`, { isActive: !faq.isActive });
+      setFaqs((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour');
     }
   }
 
-  // Testimonial handlers
-  function openTestimonialCreate() {
-    setEditingTestimonial(null);
-    setTestimonialForm({ name: '', role: '', content: '', rating: 5, published: true });
-    setShowTestimonialForm(true);
+  async function deleteFaq(faq: Faq) {
+    if (!confirm(`Supprimer la question « ${faq.question} » ?`)) return;
+    try {
+      await api.delete(`/content/faqs/${faq.id}`);
+      setFaqs((prev) => prev.filter((f) => f.id !== faq.id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de la suppression');
+    }
   }
 
-  function openTestimonialEdit(t: Testimonial) {
-    setEditingTestimonial(t);
-    setTestimonialForm({ name: t.name, role: t.role, content: t.content, rating: t.rating, published: t.published });
-    setShowTestimonialForm(true);
+  // ---------------- Testimonials ----------------
+  function openTestimonial(t?: Testimonial) {
+    setEditingTId(t?.id ?? null);
+    setTForm(
+      t
+        ? {
+            authorName: t.authorName,
+            authorRole: t.authorRole || '',
+            authorLocation: t.authorLocation || '',
+            content: t.content,
+            rating: t.rating ?? 5,
+            sortOrder: t.sortOrder,
+            isActive: t.isActive,
+          }
+        : { ...EMPTY_TESTIMONIAL, sortOrder: testimonials.length },
+    );
+    setShowTForm(true);
   }
 
   async function handleTestimonialSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSavingTestimonial(true);
+    setSavingT(true);
+    setError('');
     try {
-      if (editingTestimonial) {
-        await api.put(`/content/testimonials/${editingTestimonial.id}`, testimonialForm);
+      const payload = { ...tForm, rating: Number(tForm.rating), sortOrder: Number(tForm.sortOrder) || 0 };
+      if (editingTId) {
+        const updated = await api.put<Testimonial>(`/content/testimonials/${editingTId}`, payload);
+        setTestimonials((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
       } else {
-        await api.post('/content/testimonials', testimonialForm);
+        const created = await api.post<Testimonial>('/content/testimonials', payload);
+        setTestimonials((prev) => [...prev, created]);
       }
-      setShowTestimonialForm(false);
-      fetchAll();
-      showMessage(editingTestimonial ? 'Témoignage modifié.' : 'Témoignage ajouté.');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erreur');
+      setTestimonials((prev) => [...prev].sort((a, b) => a.sortOrder - b.sortOrder));
+      setShowTForm(false);
+      setSuccess('Témoignage enregistré.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur lors de l'enregistrement");
     } finally {
-      setSavingTestimonial(false);
+      setSavingT(false);
     }
   }
 
-  async function handleDeleteTestimonial(t: Testimonial) {
-    if (!confirm(`Supprimer ce témoignage ?`)) return;
+  async function toggleTestimonial(t: Testimonial) {
+    try {
+      const updated = await api.put<Testimonial>(`/content/testimonials/${t.id}`, { isActive: !t.isActive });
+      setTestimonials((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour');
+    }
+  }
+
+  async function deleteTestimonial(t: Testimonial) {
+    if (!confirm(`Supprimer le témoignage de ${t.authorName} ?`)) return;
     try {
       await api.delete(`/content/testimonials/${t.id}`);
-      fetchAll();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erreur');
+      setTestimonials((prev) => prev.filter((x) => x.id !== t.id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de la suppression');
     }
   }
 
-  async function handleToggleTestimonialPublished(t: Testimonial) {
-    try {
-      await api.put(`/content/testimonials/${t.id}`, { published: !t.published });
-      fetchAll();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erreur');
-    }
-  }
-
-  const tabs = [
-    { key: 'settings' as const, label: 'Site' },
-    { key: 'faq' as const, label: 'FAQ' },
-    { key: 'testimonials' as const, label: 'Témoignages' },
+  const tabs: { id: Tab; label: string }[] = [
+    { id: 'settings', label: 'Informations du site' },
+    { id: 'faq', label: `FAQ (${faqs.length})` },
+    { id: 'testimonials', label: `Témoignages (${testimonials.length})` },
   ];
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Paramètres</h1>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
-          {success}
-        </div>
-      )}
-
-      {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="flex gap-6">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={cn(
-                'pb-3 text-sm font-medium border-b-2 transition-colors',
-                activeTab === tab.key
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
+      <div className="flex gap-1 border-b border-gray-200 overflow-x-auto">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={cn(
+              'px-4 py-2 text-sm font-medium border-b-2 -mb-px whitespace-nowrap',
+              tab === t.id ? 'border-primary-600 text-primary-700' : 'border-transparent text-gray-500 hover:text-gray-700',
+            )}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
-      {/* Site Settings */}
-      {activeTab === 'settings' && (
+      <ErrorAlert message={error} onClose={() => setError('')} />
+      <SuccessAlert message={success} onDone={() => setSuccess('')} />
+
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+        </div>
+      ) : tab === 'settings' ? (
         <Card>
           <CardHeader>
-            <h2 className="text-lg font-semibold">Informations du site</h2>
+            <h2 className="text-lg font-semibold">Coordonnées affichées sur le site</h2>
           </CardHeader>
           <CardBody>
-            <form onSubmit={handleSaveSettings} className="space-y-4 max-w-lg">
-              <Input
-                label="Numéro WhatsApp"
-                placeholder="+221770000000"
-                value={settings.whatsappNumber}
-                onChange={(e) => setSettings({ ...settings, whatsappNumber: e.target.value })}
-              />
-              <Input
-                label="Nom de l'entreprise"
-                value={settings.companyName}
-                onChange={(e) => setSettings({ ...settings, companyName: e.target.value })}
-              />
-              <Input
-                label="Email"
-                type="email"
-                value={settings.companyEmail}
-                onChange={(e) => setSettings({ ...settings, companyEmail: e.target.value })}
-              />
-              <Input
-                label="Téléphone"
-                value={settings.companyPhone}
-                onChange={(e) => setSettings({ ...settings, companyPhone: e.target.value })}
-              />
-              <Textarea
-                label="Adresse"
-                value={settings.companyAddress}
-                onChange={(e) => setSettings({ ...settings, companyAddress: e.target.value })}
-              />
+            <form onSubmit={handleSaveSettings} className="space-y-4 max-w-xl">
+              {SETTING_FIELDS.map((f) => (
+                <Input
+                  key={f.key}
+                  id={`s-${f.key}`}
+                  label={f.label}
+                  type={f.type}
+                  placeholder={f.placeholder}
+                  value={settings[f.key] ?? ''}
+                  onChange={(e) => setSettings((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                />
+              ))}
               <Button type="submit" loading={savingSettings}>
                 <Save className="h-4 w-4" />
                 Enregistrer
@@ -295,15 +288,12 @@ export default function ParametresAdminPage() {
             </form>
           </CardBody>
         </Card>
-      )}
-
-      {/* FAQ */}
-      {activeTab === 'faq' && (
+      ) : tab === 'faq' ? (
         <div className="space-y-4">
           <div className="flex justify-end">
-            <Button onClick={openFaqCreate}>
+            <Button onClick={() => openFaq()}>
               <Plus className="h-4 w-4" />
-              Ajouter une FAQ
+              Ajouter une question
             </Button>
           </div>
 
@@ -311,8 +301,8 @@ export default function ParametresAdminPage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold">{editingFaq ? 'Modifier' : 'Nouvelle FAQ'}</h2>
-                  <button onClick={() => setShowFaqForm(false)} className="text-gray-400 hover:text-gray-600">
+                  <h2 className="text-lg font-semibold">{editingFaqId ? 'Modifier la question' : 'Nouvelle question'}</h2>
+                  <button onClick={() => setShowFaqForm(false)} className="text-gray-400 hover:text-gray-600" aria-label="Fermer">
                     <X className="h-5 w-5" />
                   </button>
                 </div>
@@ -320,30 +310,49 @@ export default function ParametresAdminPage() {
               <CardBody>
                 <form onSubmit={handleFaqSubmit} className="space-y-4">
                   <Input
+                    id="faq-q"
                     label="Question"
                     required
                     value={faqForm.question}
                     onChange={(e) => setFaqForm({ ...faqForm, question: e.target.value })}
                   />
                   <Textarea
+                    id="faq-a"
                     label="Réponse"
                     required
+                    rows={4}
                     value={faqForm.answer}
                     onChange={(e) => setFaqForm({ ...faqForm, answer: e.target.value })}
                   />
-                  <Input
-                    label="Ordre"
-                    type="number"
-                    value={faqForm.order}
-                    onChange={(e) => setFaqForm({ ...faqForm, order: parseInt(e.target.value) || 0 })}
-                  />
-                  <div className="flex justify-end gap-3">
-                    <Button variant="ghost" type="button" onClick={() => setShowFaqForm(false)}>
-                      Annuler
-                    </Button>
-                    <Button type="submit" loading={savingFaq}>
-                      {editingFaq ? 'Enregistrer' : 'Créer'}
-                    </Button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Input
+                      id="faq-cat"
+                      label="Catégorie"
+                      placeholder="produits, commande, livraison..."
+                      value={faqForm.category}
+                      onChange={(e) => setFaqForm({ ...faqForm, category: e.target.value })}
+                    />
+                    <Input
+                      id="faq-order"
+                      label="Ordre d'affichage"
+                      type="number"
+                      min={0}
+                      value={faqForm.sortOrder}
+                      onChange={(e) => setFaqForm({ ...faqForm, sortOrder: Number(e.target.value) })}
+                    />
+                  </div>
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={faqForm.isActive}
+                      onChange={(e) => setFaqForm({ ...faqForm, isActive: e.target.checked })}
+                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    Visible sur le site
+                  </label>
+                  <div className="flex gap-3">
+                    <Button type="submit" loading={savingFaq}>Enregistrer</Button>
+                    <Button type="button" variant="outline" onClick={() => setShowFaqForm(false)}>Annuler</Button>
                   </div>
                 </form>
               </CardBody>
@@ -352,112 +361,120 @@ export default function ParametresAdminPage() {
 
           {faqs.length === 0 ? (
             <Card>
-              <CardBody>
-                <div className="text-center py-8 text-gray-500 text-sm">Aucune FAQ.</div>
-              </CardBody>
+              <div className="text-center py-8 text-gray-500 text-sm">Aucune question pour le moment.</div>
             </Card>
           ) : (
-            <div className="space-y-2">
-              {faqs
-                .sort((a, b) => a.order - b.order)
-                .map((faq) => (
-                  <Card key={faq.id}>
-                    <div className="px-5 py-3 flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
+            <Card>
+              <ul className="divide-y divide-gray-100">
+                {faqs.map((faq) => (
+                  <li key={faq.id} className="px-5 py-4 flex gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium text-gray-900">{faq.question}</p>
-                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{faq.answer}</p>
+                        {faq.category && <Badge variant="info">{faq.category}</Badge>}
+                        {!faq.isActive && <Badge>Masquée</Badge>}
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <button
-                          onClick={() => openFaqEdit(faq)}
-                          className="p-1.5 text-gray-400 hover:text-primary-600 rounded"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteFaq(faq)}
-                          className="p-1.5 text-gray-400 hover:text-red-600 rounded"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
+                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">{faq.answer}</p>
                     </div>
-                  </Card>
+                    <div className="flex items-start gap-1 shrink-0">
+                      <button onClick={() => toggleFaq(faq)} className="p-2 text-gray-400 hover:text-primary-600" title={faq.isActive ? 'Masquer' : 'Afficher'}>
+                        {faq.isActive ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                      </button>
+                      <button onClick={() => openFaq(faq)} className="p-2 text-gray-400 hover:text-primary-600" title="Modifier">
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => deleteFaq(faq)} className="p-2 text-gray-400 hover:text-red-600" title="Supprimer">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </li>
                 ))}
-            </div>
+              </ul>
+            </Card>
           )}
         </div>
-      )}
-
-      {/* Testimonials */}
-      {activeTab === 'testimonials' && (
+      ) : (
         <div className="space-y-4">
           <div className="flex justify-end">
-            <Button onClick={openTestimonialCreate}>
+            <Button onClick={() => openTestimonial()}>
               <Plus className="h-4 w-4" />
               Ajouter un témoignage
             </Button>
           </div>
 
-          {showTestimonialForm && (
+          {showTForm && (
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold">{editingTestimonial ? 'Modifier' : 'Nouveau témoignage'}</h2>
-                  <button onClick={() => setShowTestimonialForm(false)} className="text-gray-400 hover:text-gray-600">
+                  <h2 className="text-lg font-semibold">{editingTId ? 'Modifier le témoignage' : 'Nouveau témoignage'}</h2>
+                  <button onClick={() => setShowTForm(false)} className="text-gray-400 hover:text-gray-600" aria-label="Fermer">
                     <X className="h-5 w-5" />
                   </button>
                 </div>
               </CardHeader>
               <CardBody>
                 <form onSubmit={handleTestimonialSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <Input
+                      id="t-name"
                       label="Nom"
                       required
-                      value={testimonialForm.name}
-                      onChange={(e) => setTestimonialForm({ ...testimonialForm, name: e.target.value })}
+                      value={tForm.authorName}
+                      onChange={(e) => setTForm({ ...tForm, authorName: e.target.value })}
                     />
                     <Input
-                      label="Rôle / Fonction"
-                      value={testimonialForm.role}
-                      onChange={(e) => setTestimonialForm({ ...testimonialForm, role: e.target.value })}
+                      id="t-role"
+                      label="Fonction"
+                      placeholder="Maraîcher, présidente de GIE..."
+                      value={tForm.authorRole}
+                      onChange={(e) => setTForm({ ...tForm, authorRole: e.target.value })}
+                    />
+                    <Input
+                      id="t-loc"
+                      label="Localité"
+                      value={tForm.authorLocation}
+                      onChange={(e) => setTForm({ ...tForm, authorLocation: e.target.value })}
                     />
                   </div>
                   <Textarea
+                    id="t-content"
                     label="Témoignage"
                     required
-                    value={testimonialForm.content}
-                    onChange={(e) => setTestimonialForm({ ...testimonialForm, content: e.target.value })}
+                    rows={4}
+                    value={tForm.content}
+                    onChange={(e) => setTForm({ ...tForm, content: e.target.value })}
                   />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Input
-                      label="Note (1-5)"
+                      id="t-rating"
+                      label="Note (1 à 5)"
                       type="number"
                       min={1}
                       max={5}
-                      value={testimonialForm.rating}
-                      onChange={(e) => setTestimonialForm({ ...testimonialForm, rating: parseInt(e.target.value) || 5 })}
+                      value={tForm.rating}
+                      onChange={(e) => setTForm({ ...tForm, rating: Number(e.target.value) })}
                     />
-                    <div className="flex items-end pb-1">
-                      <label className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={testimonialForm.published}
-                          onChange={(e) => setTestimonialForm({ ...testimonialForm, published: e.target.checked })}
-                          className="rounded border-gray-300"
-                        />
-                        Publié
-                      </label>
-                    </div>
+                    <Input
+                      id="t-order"
+                      label="Ordre d'affichage"
+                      type="number"
+                      min={0}
+                      value={tForm.sortOrder}
+                      onChange={(e) => setTForm({ ...tForm, sortOrder: Number(e.target.value) })}
+                    />
                   </div>
-                  <div className="flex justify-end gap-3">
-                    <Button variant="ghost" type="button" onClick={() => setShowTestimonialForm(false)}>
-                      Annuler
-                    </Button>
-                    <Button type="submit" loading={savingTestimonial}>
-                      {editingTestimonial ? 'Enregistrer' : 'Créer'}
-                    </Button>
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={tForm.isActive}
+                      onChange={(e) => setTForm({ ...tForm, isActive: e.target.checked })}
+                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    Visible sur le site
+                  </label>
+                  <div className="flex gap-3">
+                    <Button type="submit" loading={savingT}>Enregistrer</Button>
+                    <Button type="button" variant="outline" onClick={() => setShowTForm(false)}>Annuler</Button>
                   </div>
                 </form>
               </CardBody>
@@ -466,52 +483,40 @@ export default function ParametresAdminPage() {
 
           {testimonials.length === 0 ? (
             <Card>
-              <CardBody>
-                <div className="text-center py-8 text-gray-500 text-sm">Aucun témoignage.</div>
-              </CardBody>
+              <div className="text-center py-8 text-gray-500 text-sm">Aucun témoignage pour le moment.</div>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid gap-4 md:grid-cols-2">
               {testimonials.map((t) => (
-                <Card key={t.id}>
+                <Card key={t.id} className={cn(!t.isActive && 'opacity-60')}>
                   <CardBody>
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div>
-                        <p className="font-medium text-gray-900">{t.name}</p>
-                        <p className="text-xs text-gray-500">{t.role}</p>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-gray-900">{t.authorName}</p>
+                        <p className="text-xs text-gray-500">
+                          {[t.authorRole, t.authorLocation].filter(Boolean).join(' · ') || '—'}
+                        </p>
+                        {t.rating && (
+                          <div className="flex gap-0.5 mt-1" aria-label={`${t.rating} sur 5`}>
+                            {Array.from({ length: 5 }, (_, i) => (
+                              <Star key={i} className={cn('h-3.5 w-3.5', i < t.rating! ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300')} />
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <button
-                          onClick={() => handleToggleTestimonialPublished(t)}
-                          className={cn(
-                            'px-2 py-0.5 rounded text-xs font-medium transition-colors',
-                            t.published ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                          )}
-                        >
-                          {t.published ? 'Publié' : 'Brouillon'}
+                      <div className="flex gap-1 shrink-0">
+                        <button onClick={() => toggleTestimonial(t)} className="p-2 text-gray-400 hover:text-primary-600" title={t.isActive ? 'Masquer' : 'Afficher'}>
+                          {t.isActive ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                         </button>
-                        <button
-                          onClick={() => openTestimonialEdit(t)}
-                          className="p-1 text-gray-400 hover:text-primary-600 rounded"
-                        >
-                          <Edit2 className="h-3.5 w-3.5" />
+                        <button onClick={() => openTestimonial(t)} className="p-2 text-gray-400 hover:text-primary-600" title="Modifier">
+                          <Edit2 className="h-4 w-4" />
                         </button>
-                        <button
-                          onClick={() => handleDeleteTestimonial(t)}
-                          className="p-1 text-gray-400 hover:text-red-600 rounded"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
+                        <button onClick={() => deleteTestimonial(t)} className="p-2 text-gray-400 hover:text-red-600" title="Supprimer">
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-700 line-clamp-3">{t.content}</p>
-                    <div className="mt-2 flex gap-0.5">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <span key={star} className={star <= t.rating ? 'text-yellow-400' : 'text-gray-200'}>
-                          &#9733;
-                        </span>
-                      ))}
-                    </div>
+                    <p className="text-sm text-gray-700 mt-3 italic">« {t.content} »</p>
                   </CardBody>
                 </Card>
               ))}

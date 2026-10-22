@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { Fragment, useEffect, useState, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { cn, formatDate, statusLabel, statusColor, getWhatsAppUrl, WHATSAPP_NUMBER } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
 import { Card, CardHeader } from '@/components/ui/card';
+import { NotesPanel } from '@/components/admin/notes-panel';
+import { useDebouncedValue, type Note } from '@/lib/admin';
 import {
   Search,
   Download,
@@ -19,7 +21,6 @@ import {
   Package,
   MapPin,
   User,
-  MessageSquare,
 } from 'lucide-react';
 
 interface OrderRequest {
@@ -102,15 +103,13 @@ export default function CommandesPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [noteText, setNoteText] = useState('');
-  const [savingNote, setSavingNote] = useState(false);
+  const debouncedSearch = useDebouncedValue(search);
 
   const fetchOrders = useCallback(async () => {
     try {
-      setLoading(true);
       setError('');
-      const params = new URLSearchParams({ type: 'COMMANDE', limit: '50' });
-      if (search) params.set('search', search);
+      const params = new URLSearchParams({ type: 'COMMANDE', limit: '100' });
+      if (debouncedSearch) params.set('search', debouncedSearch);
       if (statusFilter) params.set('status', statusFilter);
       const data = await api.get<OrdersResponse>(`/commercial-requests?${params}`);
       setOrders(data.data || []);
@@ -120,7 +119,7 @@ export default function CommandesPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter]);
+  }, [debouncedSearch, statusFilter]);
 
   useEffect(() => {
     fetchOrders();
@@ -141,17 +140,12 @@ export default function CommandesPage() {
     }
   }
 
-  async function handleAddNote(id: string) {
-    if (!noteText.trim()) return;
-    setSavingNote(true);
+  async function handleAddNote(id: string, content: string) {
     try {
-      await api.post(`/commercial-requests/${id}/notes`, { content: noteText });
-      setNoteText('');
-      fetchOrders();
+      const note = await api.post<Note>(`/commercial-requests/${id}/notes`, { content });
+      setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, notes: [note, ...o.notes] } : o)));
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erreur');
-    } finally {
-      setSavingNote(false);
+      setError(err instanceof Error ? err.message : "Erreur lors de l'ajout de la note");
     }
   }
 
@@ -240,9 +234,8 @@ export default function CommandesPage() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {orders.map((order) => (
-                  <>
+                  <Fragment key={order.id}>
                     <tr
-                      key={order.id}
                       className={cn(
                         'hover:bg-gray-50 cursor-pointer',
                         order.status === 'NOUVEAU' && 'bg-blue-50/50',
@@ -378,40 +371,13 @@ export default function CommandesPage() {
 
                             {/* Notes */}
                             <div className="md:col-span-2 space-y-2">
-                              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                Notes ({order.notes?.length || 0})
-                              </h4>
-                              {order.notes && order.notes.length > 0 && (
-                                <div className="space-y-2 mb-3">
-                                  {order.notes.map((note) => (
-                                    <div key={note.id} className="bg-white border border-gray-200 rounded p-2 text-sm">
-                                      <p>{note.content}</p>
-                                      <p className="text-xs text-gray-400 mt-1">
-                                        {note.author.firstName} {note.author.lastName} - {formatDate(note.createdAt)}
-                                      </p>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  placeholder="Ajouter une note..."
-                                  value={expandedId === order.id ? noteText : ''}
-                                  onChange={(e) => setNoteText(e.target.value)}
-                                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
-                                  onKeyDown={(e) => e.key === 'Enter' && handleAddNote(order.id)}
-                                />
-                                <Button size="sm" onClick={() => handleAddNote(order.id)} disabled={savingNote}>
-                                  <MessageSquare className="h-3 w-3" />
-                                </Button>
-                              </div>
+                              <NotesPanel notes={order.notes} onAdd={(content) => handleAddNote(order.id, content)} />
                             </div>
                           </div>
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>

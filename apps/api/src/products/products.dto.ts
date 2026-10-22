@@ -4,9 +4,13 @@ import {
   IsBoolean,
   IsArray,
   IsInt,
+  IsIn,
   Min,
+  Max,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
+
+export const AVAILABILITIES = ['EN_STOCK', 'SUR_COMMANDE', 'RUPTURE'] as const;
 import { PartialType } from '@nestjs/swagger';
 
 export class CreateProductDto {
@@ -46,7 +50,7 @@ export class CreateProductDto {
   packaging?: string;
 
   @IsOptional()
-  @IsString()
+  @IsIn(AVAILABILITIES)
   availability?: string;
 
   @IsOptional()
@@ -114,12 +118,13 @@ export class ProductFilterDto {
   tag?: string;
 
   @IsOptional()
-  @IsString()
+  @IsIn(AVAILABILITIES)
   availability?: string;
 
+  // Query strings are text: 'false' must not become true
   @IsOptional()
+  @Transform(({ obj, key }) => [true, 'true', '1'].includes(obj[key]))
   @IsBoolean()
-  @Type(() => Boolean)
   featured?: boolean;
 
   @IsOptional()
@@ -132,6 +137,7 @@ export class ProductFilterDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(100)
   limit?: number = 20;
 }
 

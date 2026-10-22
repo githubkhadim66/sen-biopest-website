@@ -43,7 +43,10 @@ interface ProductDetail {
 // SEO — generateMetadata (server-side)
 // ---------------------------------------------------------------------------
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+// Server-side: must be an absolute URL (the public one may be relative, e.g. /api)
+const API_URL =
+  process.env.INTERNAL_API_URL ||
+  (process.env.NEXT_PUBLIC_API_URL?.startsWith('http') ? process.env.NEXT_PUBLIC_API_URL : 'http://localhost:3001/api');
 
 async function getProduct(slug: string): Promise<ProductDetail | null> {
   try {

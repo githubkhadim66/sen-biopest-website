@@ -24,11 +24,12 @@ import {
   ImageOff,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { cn, getWhatsAppUrl, WHATSAPP_NUMBER } from '@/lib/utils';
+import { cn, getWhatsAppUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/hooks/use-cart';
+import { useSiteSettings } from '@/hooks/use-site-settings';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -125,7 +126,7 @@ function Breadcrumb({ productName }: { productName: string }) {
   );
 }
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace('/api', '');
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '');
 
 function resolveImageUrl(url: string): string {
   if (url.startsWith('http')) return url;
@@ -268,6 +269,8 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
 // ---------------------------------------------------------------------------
 
 function CTABlock({ product }: { product: ProductDetail }) {
+  const { whatsappNumber: WHATSAPP_NUMBER } = useSiteSettings();
+
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
 
@@ -348,6 +351,8 @@ function CTABlock({ product }: { product: ProductDetail }) {
 // ---------------------------------------------------------------------------
 
 export default function ProductDetailClient({ slug }: { slug: string }) {
+  const { whatsappNumber: WHATSAPP_NUMBER } = useSiteSettings();
+
   const { data: product, isLoading, isError, error } = useQuery<ProductDetail>({
     queryKey: ['product', slug],
     queryFn: () => api.get<ProductDetail>(`/products/${slug}`),

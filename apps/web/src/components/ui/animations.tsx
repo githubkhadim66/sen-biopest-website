@@ -191,16 +191,7 @@ export function AnimatedCounter({
 }
 
 function CountUp({ target, duration }: { target: number; duration: number }) {
-  return (
-    <motion.span
-      initial={0}
-      animate={target}
-      transition={{ duration, ease: 'easeOut' }}
-    >
-      {/* Using a workaround with useMotionValue */}
-      <CountUpInner target={target} duration={duration} />
-    </motion.span>
-  );
+  return <CountUpInner target={target} duration={duration} />;
 }
 
 function CountUpInner({ target, duration }: { target: number; duration: number }) {

@@ -5,7 +5,7 @@ site public (catalogue de produits, cultures & ravageurs ciblés, formations,
 demandes de devis et d'accompagnement technique) et un **back-office** de gestion
 des demandes, des produits, des formations, des partenariats et du contenu.
 
-> ⚠️ **Statut** : code source complet, **non encore déployé**. Une démo vidéo
+> ⚠️ **Statut** : code source complet et prêt pour la production (voir [Mise en production](#-mise-en-production)), **non encore déployé**. Une démo vidéo
 > (`senbio`) est disponible — voir la section [Démo](#-démo).
 
 <p>
@@ -81,39 +81,33 @@ Monorepo **pnpm + Turborepo** : deux applications et des paquets partagés.
 - **pnpm 9** (`npm i -g pnpm`)
 - **PostgreSQL 16** (ou Docker)
 
-## 🚀 Démarrage rapide
-
-### Option 1 — Docker (recommandé)
-
-```bash
-cp .env.example .env
-docker compose -f docker/docker-compose.yml up --build
-```
-
-- Web : http://localhost:3000
-- API : http://localhost:3001/api
-- Base PostgreSQL : `localhost:5432` (`postgres` / `postgres`)
-
-### Option 2 — en local
+## 🚀 Démarrage rapide (développement)
 
 ```bash
 # 1. Dépendances
 pnpm install
 
-# 2. Variables d'environnement
-cp .env.example .env            # renseigner DATABASE_URL et les secrets JWT
+# 2. Variables d'environnement (copier aussi dans prisma/ et apps/api/)
+cp .env.example .env
 
-# 3. Base de données
-pnpm db:generate                # génère le client Prisma
-pnpm db:push                    # applique le schéma à la base
-pnpm db:seed                    # (optionnel) jeu de données de démonstration
+# 3. Base PostgreSQL locale (ou une instance existante, cf. DATABASE_URL)
+docker run -d --name senbiopest-db -e POSTGRES_DB=senbiopest \
+  -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:16-alpine
 
-# 4. Lancer le web + l'API en parallèle
+# 4. Schéma + données de démonstration
+pnpm db:generate
+pnpm --filter prisma-config exec prisma migrate deploy
+pnpm db:seed                    # admin@senbiopest.com / admin123 (démo uniquement)
+
+# 5. Lancer le web + l'API
 pnpm dev
 ```
 
-- Web : http://localhost:3000
-- API + docs **Swagger** : http://localhost:3001/api
+- Site : http://localhost:3000 — back-office : http://localhost:3000/admin
+- API + docs **Swagger** : http://localhost:3001/api/docs
+
+> `pnpm dev` compile chaque page à la première visite : c'est lent par nature.
+> Pour juger des performances réelles : `pnpm build` puis lancer les builds.
 
 ## 🔧 Scripts
 
@@ -123,7 +117,7 @@ pnpm dev
 | `pnpm build` | Build de toutes les applications |
 | `pnpm lint` | Lint de l'ensemble du monorepo |
 | `pnpm db:generate` | Génère le client Prisma |
-| `pnpm db:push` | Synchronise le schéma avec la base |
+| `pnpm db:push` | Synchronise le schéma avec la base (prototypage uniquement) |
 | `pnpm db:migrate` | Crée/joue une migration de développement |
 | `pnpm db:seed` | Insère les données de démonstration |
 | `pnpm db:studio` | Ouvre Prisma Studio |
@@ -146,11 +140,36 @@ réglages) · Médias · Journal d'audit · Suivi des clics CTA.
 
 Schéma complet : [`prisma/schema.prisma`](./prisma/schema.prisma).
 
-## 🚢 Déploiement
+## 🚢 Mise en production
 
-Les images Docker (`docker/Dockerfile.web`, `docker/Dockerfile.api`) et le
-`docker-compose.yml` permettent un déploiement conteneurisé. Le projet n'est pas
-encore déployé publiquement.
+Pile Docker complète dans [`docker/`](./docker) : PostgreSQL, API, site et
+**Caddy** (HTTPS automatique). Tout est servi sur **un seul domaine** :
+`/api` et `/uploads` vers l'API, le reste vers le site.
+
+1. Un serveur Linux avec Docker, et un enregistrement DNS `A` du domaine vers son IP
+   (ports 80 et 443 ouverts).
+2. Configurer :
+   ```bash
+   cp .env.production.example .env   # renseigner DOMAIN, mots de passe et secrets
+   ```
+3. Démarrer (les migrations de base sont appliquées automatiquement au démarrage de l'API) :
+   ```bash
+   docker compose -f docker/docker-compose.yml --env-file .env up -d --build
+   ```
+4. Créer le premier administrateur (pas de données de démo en production) :
+   ```bash
+   docker compose -f docker/docker-compose.yml exec \
+     -e ADMIN_EMAIL=vous@domaine.sn -e ADMIN_PASSWORD='mot-de-passe-long' \
+     api node dist/scripts/create-admin.js
+   ```
+5. Dans **Admin > Paramètres**, renseigner le numéro WhatsApp, le téléphone,
+   l'email et l'adresse affichés sur le site.
+
+**Sauvegardes** : la base (`pgdata`) et les fichiers envoyés (`uploads`) sont des
+volumes Docker. Exemple de sauvegarde quotidienne de la base :
+`docker compose -f docker/docker-compose.yml exec -T db pg_dump -U <user> senbiopest | gzip > backup-$(date +%F).sql.gz`
+
+**Santé** : `GET /api/health` (utilisé par les healthchecks Docker).
 
 ## 👤 Auteur
 

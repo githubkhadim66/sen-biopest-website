@@ -2,12 +2,24 @@ import {
   Injectable,
   UnauthorizedException,
   ConflictException,
+  BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto, CreateUserDto, UpdateUserDto } from './auth.dto';
-import { Role } from '@prisma/client';
+import { Role, User } from '@prisma/client';
+
+const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret';
+
+const publicUser = (user: User) => ({
+  id: user.id,
+  email: user.email,
+  firstName: user.firstName,
+  lastName: user.lastName,
+  role: user.role,
+});
 
 @Injectable()
 export class AuthService {
@@ -18,7 +30,7 @@ export class AuthService {
 
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+      where: { email: dto.email.toLowerCase() },
     });
 
     if (!user || !user.isActive) {
@@ -30,38 +42,21 @@ export class AuthService {
       throw new UnauthorizedException('Identifiants invalides');
     }
 
-    const tokens = this.generateTokens(user.id, user.email, user.role);
-
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-      },
-      tokens,
-    };
+    return { user: publicUser(user), tokens: this.generateTokens(user.id, user.email, user.role) };
   }
 
   async refresh(refreshToken: string) {
+    let payload: { sub: string };
     try {
-      const payload = this.jwt.verify(refreshToken, {
-        secret: process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret',
-      });
-
-      const user = await this.prisma.user.findUnique({
-        where: { id: payload.sub },
-      });
-
-      if (!user || !user.isActive) {
-        throw new UnauthorizedException();
-      }
-
-      return this.generateTokens(user.id, user.email, user.role);
+      payload = this.jwt.verify(refreshToken, { secret: REFRESH_SECRET });
     } catch {
-      throw new UnauthorizedException('Token invalide');
+      throw new UnauthorizedException('Session expirée');
     }
+
+    const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+    if (!user || !user.isActive) throw new UnauthorizedException('Session expirée');
+
+    return { user: publicUser(user), tokens: this.generateTokens(user.id, user.email, user.role) };
   }
 
   async getProfile(userId: string) {
@@ -97,9 +92,8 @@ export class AuthService {
   }
 
   async createUser(dto: CreateUserDto) {
-    const existing = await this.prisma.user.findUnique({
-      where: { email: dto.email },
-    });
+    const email = dto.email.toLowerCase();
+    const existing = await this.prisma.user.findUnique({ where: { email } });
     if (existing) {
       throw new ConflictException('Cet email est déjà utilisé');
     }
@@ -107,7 +101,7 @@ export class AuthService {
     const hash = await bcrypt.hash(dto.password, 10);
     const user = await this.prisma.user.create({
       data: {
-        email: dto.email,
+        email,
         password: hash,
         firstName: dto.firstName,
         lastName: dto.lastName,
@@ -126,7 +120,13 @@ export class AuthService {
     return user;
   }
 
-  async updateUser(id: string, dto: UpdateUserDto) {
+  async updateUser(id: string, dto: UpdateUserDto, currentUserId?: string) {
+    if (id === currentUserId && (dto.isActive === false || (dto.role && dto.role !== Role.ADMIN))) {
+      throw new BadRequestException('Vous ne pouvez pas désactiver votre propre compte ni retirer votre rôle administrateur');
+    }
+    const exists = await this.prisma.user.findUnique({ where: { id }, select: { id: true } });
+    if (!exists) throw new NotFoundException('Utilisateur introuvable');
+
     const data: Record<string, unknown> = {};
     if (dto.firstName) data.firstName = dto.firstName;
     if (dto.lastName) data.lastName = dto.lastName;
@@ -154,7 +154,7 @@ export class AuthService {
 
     const accessToken = this.jwt.sign(payload);
     const refreshToken = this.jwt.sign(payload, {
-      secret: process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret',
+      secret: REFRESH_SECRET,
       expiresIn: process.env.JWT_REFRESH_EXPIRATION || '7d',
     });
 

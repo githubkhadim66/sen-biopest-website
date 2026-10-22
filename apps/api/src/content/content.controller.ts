@@ -1,6 +1,17 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, HttpCode } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { ContentService } from './content.service';
+import {
+  BulkSettingsDto,
+  CreateFaqDto,
+  CreateTestimonialDto,
+  TrackClickDto,
+  UpdateFaqDto,
+  UpdateTestimonialDto,
+  UpsertBlockDto,
+  UpsertSettingDto,
+} from './content.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -41,10 +52,12 @@ export class ContentController {
     return this.service.getSetting(key);
   }
 
-  // CTA tracking (public)
+  // CTA tracking (public, fire-and-forget)
   @Post('track-click')
-  trackClick(@Body() data: { ctaType: string; page: string; productId?: string }) {
-    return this.service.trackClick(data);
+  @HttpCode(204)
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  async trackClick(@Body() dto: TrackClickDto) {
+    await this.service.trackClick(dto);
   }
 
   // Admin
@@ -52,24 +65,32 @@ export class ContentController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Put('blocks/:key')
-  upsertBlock(@Param('key') key: string, @Body() data: { title?: string; content?: string; imageUrl?: string; linkUrl?: string; linkText?: string }) {
-    return this.service.upsertBlock(key, data);
+  upsertBlock(@Param('key') key: string, @Body() dto: UpsertBlockDto) {
+    return this.service.upsertBlock(key, dto);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Get('admin/faqs')
+  getAllFaqs() {
+    return this.service.getAllFaqs();
   }
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Post('faqs')
-  createFaq(@Body() data: { question: string; answer: string; category?: string }) {
-    return this.service.createFaq(data);
+  createFaq(@Body() dto: CreateFaqDto) {
+    return this.service.createFaq(dto);
   }
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Put('faqs/:id')
-  updateFaq(@Param('id') id: string, @Body() data: { question?: string; answer?: string; category?: string }) {
-    return this.service.updateFaq(id, data);
+  updateFaq(@Param('id') id: string, @Body() dto: UpdateFaqDto) {
+    return this.service.updateFaq(id, dto);
   }
 
   @ApiBearerAuth()
@@ -83,17 +104,25 @@ export class ContentController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @Get('admin/testimonials')
+  getAllTestimonials() {
+    return this.service.getAllTestimonials();
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Post('testimonials')
-  createTestimonial(@Body() data: { authorName: string; authorRole?: string; content: string }) {
-    return this.service.createTestimonial(data);
+  createTestimonial(@Body() dto: CreateTestimonialDto) {
+    return this.service.createTestimonial(dto);
   }
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Put('testimonials/:id')
-  updateTestimonial(@Param('id') id: string, @Body() data: Record<string, unknown>) {
-    return this.service.updateTestimonial(id, data);
+  updateTestimonial(@Param('id') id: string, @Body() dto: UpdateTestimonialDto) {
+    return this.service.updateTestimonial(id, dto);
   }
 
   @ApiBearerAuth()
@@ -107,8 +136,16 @@ export class ContentController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @Put('settings')
+  upsertSettings(@Body() dto: BulkSettingsDto) {
+    return this.service.upsertSettings(dto.values);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Put('settings/:key')
-  upsertSetting(@Param('key') key: string, @Body() data: { value: string; label?: string }) {
-    return this.service.upsertSetting(key, data.value, data.label);
+  upsertSetting(@Param('key') key: string, @Body() dto: UpsertSettingDto) {
+    return this.service.upsertSetting(key, dto.value, dto.label);
   }
 }

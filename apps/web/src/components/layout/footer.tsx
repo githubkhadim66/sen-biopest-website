@@ -1,9 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { useSiteSettings } from '@/hooks/use-site-settings';
+import { formatPhone } from '@/lib/utils';
 import { Leaf, Phone, Mail, MapPin, ArrowUp } from 'lucide-react';
 
 export function Footer() {
+  const site = useSiteSettings();
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -81,19 +84,19 @@ export function Footer() {
                 <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center shrink-0">
                   <MapPin className="w-4 h-4 text-primary-400" />
                 </div>
-                <span className="pt-1">Dakar, Sénégal</span>
+                <span className="pt-1">{site.address}</span>
               </li>
               <li className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center shrink-0">
                   <Phone className="w-4 h-4 text-primary-400" />
                 </div>
-                <span>+221 77 000 00 00</span>
+                <a href={`tel:${site.phone.replace(/\s/g, '')}`} className="hover:text-white">{formatPhone(site.phone)}</a>
               </li>
               <li className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center shrink-0">
                   <Mail className="w-4 h-4 text-primary-400" />
                 </div>
-                <span>contact@senbiopest.com</span>
+                <a href={`mailto:${site.email}`} className="hover:text-white">{site.email}</a>
               </li>
             </ul>
           </div>

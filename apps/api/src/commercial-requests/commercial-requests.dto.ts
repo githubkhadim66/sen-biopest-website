@@ -10,6 +10,7 @@ import {
   CommercialRequestStatus,
   ActorType,
 } from '@prisma/client';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 export class CreateCommercialRequestDto {
   @IsEnum(CommercialRequestType)
@@ -79,4 +80,18 @@ export class UpdateCommercialRequestStatusDto {
 export class AddNoteDto {
   @IsString()
   content: string;
+}
+
+export class CommercialRequestQueryDto extends PaginationDto {
+  @IsOptional()
+  @IsEnum(CommercialRequestStatus)
+  status?: CommercialRequestStatus;
+
+  @IsOptional()
+  @IsEnum(CommercialRequestType)
+  type?: CommercialRequestType;
+
+  @IsOptional()
+  @IsString()
+  region?: string;
 }

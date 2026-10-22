@@ -10,7 +10,8 @@ import {
   MessageCircle,
   Search,
 } from 'lucide-react';
-import { getWhatsAppUrl, WHATSAPP_NUMBER } from '@/lib/utils';
+import { getWhatsAppUrl } from '@/lib/utils';
+import { useSiteSettings } from '@/hooks/use-site-settings';
 
 interface FaqItem {
   id: string;
@@ -95,16 +96,18 @@ const staticFaqs: FaqItem[] = [
 ];
 
 export default function FaqPage() {
+  const { whatsappNumber: WHATSAPP_NUMBER } = useSiteSettings();
+
   const [faqs, setFaqs] = useState<FaqItem[]>(staticFaqs);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   useEffect(() => {
     api
-      .get<{ data: FaqItem[] }>('/content/faqs')
-      .then((res) => {
-        if (res.data && res.data.length > 0) {
-          setFaqs(res.data);
+      .get<(Omit<FaqItem, 'category'> & { category: string | null })[]>('/content/faqs')
+      .then((items) => {
+        if (items.length > 0) {
+          setFaqs(items.map((f) => ({ ...f, category: f.category || 'Général' })));
         }
       })
       .catch(() => {

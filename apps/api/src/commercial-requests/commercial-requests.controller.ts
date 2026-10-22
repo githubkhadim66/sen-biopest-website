@@ -14,8 +14,9 @@ import {
   CreateCommercialRequestDto,
   UpdateCommercialRequestStatusDto,
   AddNoteDto,
+  CommercialRequestQueryDto,
 } from './commercial-requests.dto';
-import { PaginationDto } from '../common/dto/pagination.dto';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
@@ -26,6 +27,7 @@ export class CommercialRequestsController {
 
   // Public endpoint for form submission
   @Post()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   create(@Body() dto: CreateCommercialRequestDto) {
     return this.service.create(dto);
   }
@@ -34,7 +36,7 @@ export class CommercialRequestsController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Get()
-  findAll(@Query() query: PaginationDto & { status?: string; region?: string; type?: string }) {
+  findAll(@Query() query: CommercialRequestQueryDto) {
     return this.service.findAll(query);
   }
 

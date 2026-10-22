@@ -15,13 +15,14 @@ import {
 } from 'lucide-react';
 import { useCart } from '@/hooks/use-cart';
 import { api } from '@/lib/api';
-import { getWhatsAppUrl, WHATSAPP_NUMBER } from '@/lib/utils';
+import { getWhatsAppUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useSiteSettings } from '@/hooks/use-site-settings';
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace('/api', '');
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '');
 
 function resolveImageUrl(url: string): string {
   if (url.startsWith('http')) return url;
@@ -57,6 +58,8 @@ const REGIONS = [
 ];
 
 export default function PanierPage() {
+  const { whatsappNumber: WHATSAPP_NUMBER } = useSiteSettings();
+
   const router = useRouter();
   const { items, removeItem, updateQuantity, clearCart, totalItems } = useCart();
   const [step, setStep] = useState<'cart' | 'form' | 'success'>('cart');

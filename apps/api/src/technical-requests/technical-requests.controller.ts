@@ -17,8 +17,10 @@ import {
   CreateTechnicalRequestDto,
   UpdateTechnicalRequestStatusDto,
   AddTechnicalNoteDto,
+  TechnicalRequestQueryDto,
 } from './technical-requests.dto';
-import { PaginationDto } from '../common/dto/pagination.dto';
+import { Throttle } from '@nestjs/throttler';
+import { imageUploadOptions } from '../uploads/multer.config';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
@@ -28,12 +30,14 @@ export class TechnicalRequestsController {
   constructor(private service: TechnicalRequestsService) {}
 
   @Post()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   create(@Body() dto: CreateTechnicalRequestDto) {
     return this.service.create(dto);
   }
 
   @Post(':id/photos')
-  @UseInterceptors(FilesInterceptor('photos', 5))
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @UseInterceptors(FilesInterceptor('photos', 5, imageUploadOptions))
   async uploadPhotos(
     @Param('id') id: string,
     @UploadedFiles() files: Express.Multer.File[],
@@ -48,7 +52,7 @@ export class TechnicalRequestsController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Get()
-  findAll(@Query() query: PaginationDto & { status?: string; region?: string }) {
+  findAll(@Query() query: TechnicalRequestQueryDto) {
     return this.service.findAll(query);
   }
 

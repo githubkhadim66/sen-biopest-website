@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
-import { join } from 'path';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { resolve } from 'path';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { ProductsModule } from './products/products.module';
@@ -12,13 +14,19 @@ import { ContactModule } from './contact/contact.module';
 import { ContentModule } from './content/content.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { HealthModule } from './health/health.module';
+import { AuditInterceptor } from './common/interceptors/audit.interceptor';
+import { UPLOAD_DIR } from './uploads/multer.config';
 
 @Module({
   imports: [
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'uploads'),
+      rootPath: resolve(UPLOAD_DIR),
       serveRoot: '/uploads',
+      serveStaticOptions: { maxAge: '30d', immutable: true, index: false },
     }),
+    // 120 requests / minute / IP by default; public forms and login are stricter
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
     PrismaModule,
     AuthModule,
     ProductsModule,
@@ -30,6 +38,11 @@ import { UploadsModule } from './uploads/uploads.module';
     ContentModule,
     DashboardModule,
     UploadsModule,
+    HealthModule,
+  ],
+  providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
   ],
 })
 export class AppModule {}

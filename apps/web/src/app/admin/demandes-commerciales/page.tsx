@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { Fragment, useEffect, useState, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { cn, formatDate, statusLabel, statusColor } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
 import { Card, CardHeader } from '@/components/ui/card';
-import { Search, Download, ChevronDown, ChevronUp, Loader2, MessageSquare } from 'lucide-react';
+import { NotesPanel } from '@/components/admin/notes-panel';
+import { REQUEST_TYPE_LABELS, useDebouncedValue, type Note } from '@/lib/admin';
+import { Search, Download, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 
 interface CommercialRequest {
   id: string;
@@ -81,15 +83,13 @@ export default function DemandesCommercialesPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [noteText, setNoteText] = useState('');
-  const [savingNote, setSavingNote] = useState(false);
+  const debouncedSearch = useDebouncedValue(search);
 
   const fetchRequests = useCallback(async () => {
     try {
-      setLoading(true);
       setError('');
-      const params = new URLSearchParams({ limit: '50' });
-      if (search) params.set('search', search);
+      const params = new URLSearchParams({ limit: '100' });
+      if (debouncedSearch) params.set('search', debouncedSearch);
       if (statusFilter) params.set('status', statusFilter);
       if (typeFilter) params.set('type', typeFilter);
       const data = await api.get<ResponseData>(`/commercial-requests?${params}`);
@@ -99,7 +99,7 @@ export default function DemandesCommercialesPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter, typeFilter]);
+  }, [debouncedSearch, statusFilter, typeFilter]);
 
   useEffect(() => {
     fetchRequests();
@@ -108,23 +108,18 @@ export default function DemandesCommercialesPage() {
   async function handleStatusChange(id: string, newStatus: string) {
     try {
       await api.put(`/commercial-requests/${id}/status`, { status: newStatus });
-      fetchRequests();
+      setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status: newStatus } : r)));
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erreur lors de la mise a jour');
+      setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour');
     }
   }
 
-  async function handleAddNote(id: string) {
-    if (!noteText.trim()) return;
-    setSavingNote(true);
+  async function handleAddNote(id: string, content: string) {
     try {
-      await api.post(`/commercial-requests/${id}/notes`, { content: noteText });
-      setNoteText('');
-      fetchRequests();
+      const note = await api.post<Note>(`/commercial-requests/${id}/notes`, { content });
+      setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, notes: [note, ...r.notes] } : r)));
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erreur');
-    } finally {
-      setSavingNote(false);
+      setError(err instanceof Error ? err.message : "Erreur lors de l'ajout de la note");
     }
   }
 
@@ -195,9 +190,8 @@ export default function DemandesCommercialesPage() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {requests.map((req) => (
-                  <>
+                  <Fragment key={req.id}>
                     <tr
-                      key={req.id}
                       className="hover:bg-gray-50 cursor-pointer"
                       onClick={() => setExpandedId(expandedId === req.id ? null : req.id)}
                     >
@@ -209,7 +203,7 @@ export default function DemandesCommercialesPage() {
                         )}
                       </td>
                       <td className="px-5 py-3 font-medium text-gray-900 whitespace-nowrap">{req.firstName} {req.lastName}</td>
-                      <td className="px-5 py-3 text-gray-600 whitespace-nowrap">{req.type}</td>
+                      <td className="px-5 py-3 text-gray-600 whitespace-nowrap">{REQUEST_TYPE_LABELS[req.type] || req.type}</td>
                       <td className="px-5 py-3 whitespace-nowrap">
                         <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium', statusColor(req.status))}>
                           {statusLabel(req.status)}
@@ -222,7 +216,7 @@ export default function DemandesCommercialesPage() {
                       <td className="px-5 py-3 text-gray-500 whitespace-nowrap">{formatDate(req.createdAt)}</td>
                     </tr>
                     {expandedId === req.id && (
-                      <tr key={`${req.id}-detail`}>
+                      <tr>
                         <td colSpan={7} className="px-5 py-4 bg-gray-50">
                           <div className="space-y-4 max-w-2xl">
                             <div>
@@ -248,41 +242,12 @@ export default function DemandesCommercialesPage() {
                                 className="w-48"
                               />
                             </div>
-                            <div>
-                              <p className="text-xs font-medium text-gray-500 uppercase mb-1">
-                                Notes ({req.notes?.length || 0})
-                              </p>
-                              {req.notes && req.notes.length > 0 && (
-                                <div className="space-y-2 mb-3">
-                                  {req.notes.map((note) => (
-                                    <div key={note.id} className="bg-white border border-gray-200 rounded p-2 text-sm">
-                                      <p>{note.content}</p>
-                                      <p className="text-xs text-gray-400 mt-1">
-                                        {note.author.firstName} {note.author.lastName} - {formatDate(note.createdAt)}
-                                      </p>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  placeholder="Ajouter une note..."
-                                  value={expandedId === req.id ? noteText : ''}
-                                  onChange={(e) => setNoteText(e.target.value)}
-                                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
-                                  onKeyDown={(e) => e.key === 'Enter' && handleAddNote(req.id)}
-                                />
-                                <Button size="sm" onClick={() => handleAddNote(req.id)} disabled={savingNote}>
-                                  <MessageSquare className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
+                            <NotesPanel notes={req.notes} onAdd={(content) => handleAddNote(req.id, content)} />
                           </div>
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>

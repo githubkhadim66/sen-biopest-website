@@ -86,8 +86,8 @@ export default function TrainingDetailPage() {
   useEffect(() => {
     if (!slug) return;
     api
-      .get<{ data: TrainingDetail }>(`/trainings/${slug}`)
-      .then((res) => setTraining(res.data))
+      .get<TrainingDetail>(`/trainings/${slug}`)
+      .then(setTraining)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [slug]);
@@ -127,6 +127,10 @@ export default function TrainingDetailPage() {
   }
 
   if (!training) return null;
+
+  const isFull = !!training.maxParticipants && training.registrationCount >= training.maxParticipants;
+  const isPast = !!training.date && new Date(training.date) < new Date();
+  const registrationClosed = !submitted && (isFull || isPast);
 
   return (
     <>
@@ -262,6 +266,22 @@ export default function TrainingDetailPage() {
       </section>
 
       {/* Registration Form */}
+      {registrationClosed && (
+          <section id="inscription" className="section-padding bg-gray-50">
+            <div className="container-narrow text-center">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                {isPast ? 'Cette session est terminée' : 'Cette formation est complète'}
+              </h2>
+              <p className="text-gray-600 mb-6">
+                Contactez-nous pour être informé(e) des prochaines sessions.
+              </p>
+              <Link href="/contact">
+                <Button>Nous contacter</Button>
+              </Link>
+            </div>
+          </section>
+      )}
+      {!registrationClosed && (
       <section id="inscription" className="section-padding bg-gray-50">
         <div className="container-narrow">
           {submitted ? (
@@ -410,6 +430,7 @@ export default function TrainingDetailPage() {
           )}
         </div>
       </section>
+      )}
     </>
   );
 }

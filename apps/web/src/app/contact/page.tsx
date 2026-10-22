@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select } from '@/components/ui/select';
 import { Card, CardBody } from '@/components/ui/card';
 import { api } from '@/lib/api';
-import { getWhatsAppUrl, WHATSAPP_NUMBER, formatPhone } from '@/lib/utils';
+import { getWhatsAppUrl, formatPhone } from '@/lib/utils';
 import {
   MapPin,
   Phone,
@@ -22,6 +22,7 @@ import {
   AlertCircle,
   Send,
 } from 'lucide-react';
+import { useSiteSettings, type SiteSettings } from '@/hooks/use-site-settings';
 
 const contactSchema = z.object({
   name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
@@ -48,23 +49,23 @@ const subjectOptions = [
   { value: 'autre', label: 'Autre' },
 ];
 
-const contactInfo = [
+const buildContactInfo = (site: SiteSettings) => [
   {
     icon: MapPin,
     title: 'Adresse',
-    content: 'Dakar, Sénégal',
-    detail: 'Zone industrielle, Lot 42',
+    content: site.address,
+    detail: 'Sur rendez-vous',
   },
   {
     icon: Phone,
     title: 'Téléphone',
-    content: formatPhone('+221770000000'),
+    content: formatPhone(site.phone),
     detail: 'Lundi - Vendredi, 8h - 18h',
   },
   {
     icon: Mail,
     title: 'Email',
-    content: 'contact@senbiopest.sn',
+    content: site.email,
     detail: 'Réponse sous 24h',
   },
   {
@@ -76,6 +77,10 @@ const contactInfo = [
 ];
 
 export default function ContactPage() {
+  const site = useSiteSettings();
+  const WHATSAPP_NUMBER = site.whatsappNumber;
+  const contactInfo = buildContactInfo(site);
+
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 

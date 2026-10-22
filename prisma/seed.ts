@@ -3,6 +3,9 @@ import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+// Demo sessions are always in the future so registrations stay open
+const daysFromNow = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+
 async function main() {
   console.log('Seeding database...');
 
@@ -117,7 +120,7 @@ AromaProtect est adapté à une utilisation en agriculture biologique et convent
       applicationMethod: 'Pulvérisation foliaire au coucher du soleil ou tôt le matin. Renouveler tous les 7 à 10 jours en période de forte pression. Bien agiter avant emploi.',
       precautions: 'Éviter le contact avec les yeux. Porter des gants lors de la manipulation du concentré. Ne pas pulvériser en plein soleil. Respecter un délai de 3 jours avant récolte. Stocker à l\'abri de la lumière et de la chaleur.',
       packaging: 'Bidons de 1L, 5L et 20L',
-      availability: 'Disponible',
+      availability: 'EN_STOCK',
       isFeatured: true,
       isPublished: true,
       sortOrder: 1,
@@ -188,7 +191,7 @@ AromaProtect est adapté à une utilisation en agriculture biologique et convent
       applicationMethod: 'Pulvérisation foliaire, de préférence le soir. Traiter tous les 7 jours.',
       precautions: 'Éviter le contact avec les yeux et la peau. Stocker au frais.',
       packaging: 'Flacons de 500ml et bidons de 5L',
-      availability: 'Disponible',
+      availability: 'EN_STOCK',
       isFeatured: false,
       isPublished: true,
       sortOrder: 2,
@@ -216,7 +219,7 @@ AromaProtect est adapté à une utilisation en agriculture biologique et convent
       applicationMethod: 'Pulvérisation sur le feuillage sec. Application préventive recommandée.',
       precautions: 'Ne pas appliquer par temps de pluie. Stocker hors gel.',
       packaging: 'Flacons de 1L et bidons de 5L',
-      availability: 'Disponible',
+      availability: 'EN_STOCK',
       isFeatured: false,
       isPublished: true,
       sortOrder: 3,
@@ -244,8 +247,8 @@ AromaProtect est adapté à une utilisation en agriculture biologique et convent
       duration: '2 jours',
       modality: TrainingModality.PRESENTIEL,
       location: 'Centre de formation Sen Biopest, Dakar',
-      date: new Date('2026-05-15'),
-      endDate: new Date('2026-05-16'),
+      date: daysFromNow(30),
+      endDate: daysFromNow(31),
       price: 'Gratuit',
       maxParticipants: 30,
       isPublished: true,
@@ -268,7 +271,7 @@ AromaProtect est adapté à une utilisation en agriculture biologique et convent
       targetAudience: 'Jardiniers urbains, agriculteurs débutants',
       duration: '4 heures',
       modality: TrainingModality.EN_LIGNE,
-      date: new Date('2026-06-10'),
+      date: daysFromNow(60),
       price: '5 000 FCFA',
       maxParticipants: 50,
       isPublished: true,

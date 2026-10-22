@@ -25,11 +25,78 @@ interface Product {
   shortDescription: string;
   description: string;
   category: { id: string; name: string; slug: string } | null;
+  benefits: string[];
+  activeIngredients: string[];
+  dosage: string | null;
+  applicationMethod: string | null;
+  precautions: string | null;
+  packaging: string | null;
+  availability: string;
+  cropIds: string[];
+  pestIds: string[];
   isFeatured: boolean;
   isPublished: boolean;
   primaryImage: string | null;
   images: ProductImage[];
   createdAt: string;
+}
+
+const AVAILABILITY_OPTIONS = [
+  { value: 'EN_STOCK', label: 'En stock' },
+  { value: 'SUR_COMMANDE', label: 'Sur commande' },
+  { value: 'RUPTURE', label: 'Rupture de stock' },
+];
+
+const EMPTY_FORM = {
+  name: '',
+  shortDescription: '',
+  categoryId: '',
+  description: '',
+  benefits: '',
+  activeIngredients: '',
+  dosage: '',
+  applicationMethod: '',
+  precautions: '',
+  packaging: '',
+  availability: 'EN_STOCK',
+  cropIds: [] as string[],
+  pestIds: [] as string[],
+  isFeatured: false,
+  isPublished: true,
+};
+
+const lines = (value: string) => value.split('\n').map((l) => l.trim()).filter(Boolean);
+
+interface Taxon {
+  id: string;
+  name: string;
+}
+
+function TaxonPicker({ label, items, selected, onChange }: { label: string; items: Taxon[]; selected: string[]; onChange: (ids: string[]) => void }) {
+  return (
+    <div>
+      <p className="block text-sm font-medium text-gray-700 mb-2">{label}</p>
+      <div className="flex flex-wrap gap-2">
+        {items.map((item) => {
+          const active = selected.includes(item.id);
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onChange(active ? selected.filter((id) => id !== item.id) : [...selected, item.id])}
+              className={cn(
+                'px-3 py-1 rounded-full text-xs border transition-colors',
+                active ? 'bg-primary-600 border-primary-600 text-white' : 'bg-white border-gray-300 text-gray-700 hover:border-primary-400',
+              )}
+            >
+              {item.name}
+            </button>
+          );
+        })}
+        {items.length === 0 && <span className="text-xs text-gray-400">Aucun élément</span>}
+      </div>
+    </div>
+  );
 }
 
 export default function ProduitsAdminPage() {
@@ -46,20 +113,15 @@ export default function ProduitsAdminPage() {
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
 
-  const [form, setForm] = useState({
-    name: '',
-    shortDescription: '',
-    categoryId: '',
-    description: '',
-    isFeatured: false,
-    isPublished: true,
-  });
+  const [crops, setCrops] = useState<Taxon[]>([]);
+  const [pests, setPests] = useState<Taxon[]>([]);
+  const [form, setForm] = useState(EMPTY_FORM);
 
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
-      const data = await api.get<{ data: Product[] }>('/admin/products');
+      const data = await api.get<{ data: Product[] }>('/admin/products?limit=100');
       setProducts(data.data || []);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement des produits');
@@ -70,9 +132,17 @@ export default function ProduitsAdminPage() {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const data = await api.get<{ id: string; name: string }[]>('/products/categories');
-      setCategories(data || []);
-    } catch {}
+      const [cats, cropList, pestList] = await Promise.all([
+        api.get<{ id: string; name: string }[]>('/products/categories'),
+        api.get<Taxon[]>('/products/crops'),
+        api.get<Taxon[]>('/products/pests'),
+      ]);
+      setCategories(cats);
+      setCrops(cropList);
+      setPests(pestList);
+    } catch {
+      setError('Impossible de charger les catégories, cultures et ravageurs');
+    }
   }, []);
 
   useEffect(() => {
@@ -106,7 +176,7 @@ export default function ProduitsAdminPage() {
 
   function openCreate() {
     setEditingProduct(null);
-    setForm({ name: '', shortDescription: '', categoryId: '', description: '', isFeatured: false, isPublished: true });
+    setForm(EMPTY_FORM);
     setImageFiles([]);
     setImagePreviews([]);
     setExistingImages([]);
@@ -120,6 +190,15 @@ export default function ProduitsAdminPage() {
       shortDescription: product.shortDescription || '',
       categoryId: product.category?.id || '',
       description: product.description,
+      benefits: (product.benefits || []).join('\n'),
+      activeIngredients: (product.activeIngredients || []).join('\n'),
+      dosage: product.dosage || '',
+      applicationMethod: product.applicationMethod || '',
+      precautions: product.precautions || '',
+      packaging: product.packaging || '',
+      availability: product.availability || 'EN_STOCK',
+      cropIds: product.cropIds || [],
+      pestIds: product.pestIds || [],
       isFeatured: product.isFeatured,
       isPublished: product.isPublished,
     });
@@ -148,8 +227,11 @@ export default function ProduitsAdminPage() {
 
       const payload = {
         ...form,
-        categoryId: form.categoryId || undefined,
-        imageUrls: uploadedUrls.length > 0 ? uploadedUrls : undefined,
+        benefits: lines(form.benefits),
+        activeIngredients: lines(form.activeIngredients),
+        categoryId: form.categoryId || null,
+        // always sent so that removing every photo really removes them
+        imageUrls: uploadedUrls,
       };
 
       if (editingProduct) {
@@ -247,6 +329,56 @@ export default function ProduitsAdminPage() {
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
               />
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Textarea
+                  label="Bénéfices (un par ligne)"
+                  rows={4}
+                  value={form.benefits}
+                  onChange={(e) => setForm({ ...form, benefits: e.target.value })}
+                />
+                <Textarea
+                  label="Matières actives (une par ligne)"
+                  rows={4}
+                  value={form.activeIngredients}
+                  onChange={(e) => setForm({ ...form, activeIngredients: e.target.value })}
+                />
+                <Textarea
+                  label="Dosage"
+                  rows={2}
+                  value={form.dosage}
+                  onChange={(e) => setForm({ ...form, dosage: e.target.value })}
+                />
+                <Textarea
+                  label="Mode d'application"
+                  rows={2}
+                  value={form.applicationMethod}
+                  onChange={(e) => setForm({ ...form, applicationMethod: e.target.value })}
+                />
+                <Textarea
+                  label="Précautions"
+                  rows={2}
+                  value={form.precautions}
+                  onChange={(e) => setForm({ ...form, precautions: e.target.value })}
+                />
+                <div className="space-y-4">
+                  <Input
+                    label="Conditionnement"
+                    placeholder="Flacon 1 L, bidon 5 L..."
+                    value={form.packaging}
+                    onChange={(e) => setForm({ ...form, packaging: e.target.value })}
+                  />
+                  <Select
+                    label="Disponibilité"
+                    options={AVAILABILITY_OPTIONS}
+                    value={form.availability}
+                    onChange={(e) => setForm({ ...form, availability: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <TaxonPicker label="Cultures ciblées" items={crops} selected={form.cropIds} onChange={(cropIds) => setForm({ ...form, cropIds })} />
+              <TaxonPicker label="Ravageurs / maladies ciblés" items={pests} selected={form.pestIds} onChange={(pestIds) => setForm({ ...form, pestIds })} />
+
               {/* Upload images */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -255,7 +387,7 @@ export default function ProduitsAdminPage() {
                 <div className="flex flex-wrap gap-3">
                   {existingImages.map((url, i) => (
                     <div key={`existing-${i}`} className="relative group w-24 h-24 rounded-lg overflow-hidden border border-gray-200">
-                      <img src={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}${url}`} alt="" className="w-full h-full object-cover" />
+                      <img src={url} alt="" className="w-full h-full object-cover" />
                       <button
                         type="button"
                         onClick={() => removeExistingImage(i)}
@@ -376,7 +508,7 @@ export default function ProduitsAdminPage() {
                     <td className="px-5 py-3">
                       {product.primaryImage ? (
                         <img
-                          src={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}${product.primaryImage}`}
+                          src={product.primaryImage}
                           alt={product.name}
                           className="w-10 h-10 rounded object-cover"
                         />

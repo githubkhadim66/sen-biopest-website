@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Package,
@@ -16,24 +16,28 @@ import {
   LogOut,
   Menu,
   X,
+  Mail,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
-const navigation = [
-  { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-  { name: 'Commandes', href: '/admin/commandes', icon: ShoppingCart },
-  { name: 'Produits', href: '/admin/produits', icon: Package },
-  { name: 'Demandes commerciales', href: '/admin/demandes-commerciales', icon: MessageSquare },
-  { name: 'Demandes techniques', href: '/admin/demandes-techniques', icon: Wrench },
-  { name: 'Partenariats', href: '/admin/partenariats', icon: Handshake },
-  { name: 'Parametres', href: '/admin/parametres', icon: Settings },
-];
+type Role = 'ADMIN' | 'COMMERCIAL' | 'CONSEILLER';
+const ALL: Role[] = ['ADMIN', 'COMMERCIAL', 'CONSEILLER'];
 
-const adminOnlyNavigation = [
-  { name: 'Utilisateurs', href: '/admin/utilisateurs', icon: Users },
+// roles mirror the API guards so nobody sees a page that answers 403
+const navigation: { name: string; href: string; icon: typeof LayoutDashboard; roles: Role[] }[] = [
+  { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard, roles: ALL },
+  { name: 'Commandes', href: '/admin/commandes', icon: ShoppingCart, roles: ALL },
+  { name: 'Produits', href: '/admin/produits', icon: Package, roles: ['ADMIN', 'CONSEILLER'] },
+  { name: 'Demandes commerciales', href: '/admin/demandes-commerciales', icon: MessageSquare, roles: ALL },
+  { name: 'Demandes techniques', href: '/admin/demandes-techniques', icon: Wrench, roles: ALL },
+  { name: 'Formations', href: '/admin/formations', icon: GraduationCap, roles: ['ADMIN', 'CONSEILLER'] },
+  { name: 'Partenariats', href: '/admin/partenariats', icon: Handshake, roles: ALL },
+  { name: 'Messages', href: '/admin/messages', icon: Mail, roles: ALL },
+  { name: 'Paramètres', href: '/admin/parametres', icon: Settings, roles: ['ADMIN'] },
+  { name: 'Utilisateurs', href: '/admin/utilisateurs', icon: Users, roles: ['ADMIN'] },
 ];
 
 function roleBadgeVariant(role: string): 'default' | 'success' | 'info' {
@@ -65,9 +69,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const allNavItems = user?.role === 'ADMIN'
-    ? [...navigation, ...adminOnlyNavigation]
-    : navigation;
+  const allNavItems = navigation.filter((item) => user && item.roles.includes(user.role));
 
   return (
     <div className="fixed inset-0 z-50 bg-white flex">
@@ -168,8 +170,17 @@ function AdminShell({ children }: { children: React.ReactNode }) {
 
 function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
+  const pathname = usePathname();
+  const router = useRouter();
+  const isLoginPage = pathname === '/admin/login';
 
-  if (loading) {
+  useEffect(() => {
+    if (!loading && !isAuthenticated && !isLoginPage) {
+      router.replace('/admin/login');
+    }
+  }, [loading, isAuthenticated, isLoginPage, router]);
+
+  if (loading || (!isAuthenticated && !isLoginPage)) {
     return (
       <div className="fixed inset-0 z-50 bg-white flex items-center justify-center">
         <div className="animate-spin h-8 w-8 border-4 border-primary-600 border-t-transparent rounded-full" />

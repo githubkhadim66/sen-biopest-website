@@ -1,8 +1,8 @@
 import { Controller, Get, Post, Put, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { PartnershipsService } from './partnerships.service';
-import { CreatePartnershipRequestDto, UpdatePartnershipStatusDto, AddPartnershipNoteDto } from './partnerships.dto';
-import { PaginationDto } from '../common/dto/pagination.dto';
+import { CreatePartnershipRequestDto, UpdatePartnershipStatusDto, AddPartnershipNoteDto, PartnershipQueryDto } from './partnerships.dto';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
@@ -12,6 +12,7 @@ export class PartnershipsController {
   constructor(private service: PartnershipsService) {}
 
   @Post()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   create(@Body() dto: CreatePartnershipRequestDto) {
     return this.service.create(dto);
   }
@@ -19,7 +20,7 @@ export class PartnershipsController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Get()
-  findAll(@Query() query: PaginationDto & { status?: string }) {
+  findAll(@Query() query: PartnershipQueryDto) {
     return this.service.findAll(query);
   }
 

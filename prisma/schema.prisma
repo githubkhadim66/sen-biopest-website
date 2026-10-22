@@ -28,13 +28,13 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  commercialNotes    CommercialRequestNote[]
-  technicalNotes     TechnicalRequestNote[]
-  partnershipNotes   PartnershipRequestNote[]
-  auditLogs          AuditLog[]
-  assignedCommercial CommercialRequest[]      @relation("AssignedCommercial")
-  assignedTechnical  TechnicalRequest[]       @relation("AssignedConseiller")
-  assignedPartnership PartnershipRequest[]    @relation("AssignedPartnership")
+  commercialNotes     CommercialRequestNote[]
+  technicalNotes      TechnicalRequestNote[]
+  partnershipNotes    PartnershipRequestNote[]
+  auditLogs           AuditLog[]
+  assignedCommercial  CommercialRequest[]      @relation("AssignedCommercial")
+  assignedTechnical   TechnicalRequest[]       @relation("AssignedConseiller")
+  assignedPartnership PartnershipRequest[]     @relation("AssignedPartnership")
 
   @@map("users")
 }
@@ -57,25 +57,25 @@ model ProductCategory {
 }
 
 model Product {
-  id               String    @id @default(cuid())
-  name             String
-  slug             String    @unique
-  shortDescription String    @map("short_description")
-  description      String
-  benefits         String[]
+  id                String   @id @default(cuid())
+  name              String
+  slug              String   @unique
+  shortDescription  String   @map("short_description")
+  description       String
+  benefits          String[]
   activeIngredients String[] @map("active_ingredients")
-  dosage           String?
+  dosage            String?
   applicationMethod String?  @map("application_method")
-  precautions      String?
-  packaging        String?
-  availability     String    @default("Disponible")
-  isFeatured       Boolean   @default(false) @map("is_featured")
-  isPublished      Boolean   @default(true) @map("is_published")
-  sortOrder        Int       @default(0) @map("sort_order")
-  metaTitle        String?   @map("meta_title")
-  metaDescription  String?   @map("meta_description")
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
+  precautions       String?
+  packaging         String?
+  availability      String   @default("EN_STOCK") // EN_STOCK | SUR_COMMANDE | RUPTURE
+  isFeatured        Boolean  @default(false) @map("is_featured")
+  isPublished       Boolean  @default(true) @map("is_published")
+  sortOrder         Int      @default(0) @map("sort_order")
+  metaTitle         String?  @map("meta_title")
+  metaDescription   String?  @map("meta_description")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
 
   categoryId String?          @map("category_id")
   category   ProductCategory? @relation(fields: [categoryId], references: [id])
@@ -85,6 +85,8 @@ model Product {
   tags       TagOnProduct[]
   faq        ProductFaq[]
 
+  @@index([isPublished, isFeatured, sortOrder])
+  @@index([categoryId])
   @@map("products")
 }
 
@@ -226,10 +228,13 @@ model CommercialRequest {
   createdAt       DateTime                @default(now()) @map("created_at")
   updatedAt       DateTime                @updatedAt @map("updated_at")
 
-  assignedToId String? @map("assigned_to_id")
-  assignedTo   User?   @relation("AssignedCommercial", fields: [assignedToId], references: [id])
+  assignedToId String?                 @map("assigned_to_id")
+  assignedTo   User?                   @relation("AssignedCommercial", fields: [assignedToId], references: [id])
   notes        CommercialRequestNote[]
 
+  @@index([status])
+  @@index([type, createdAt])
+  @@index([createdAt])
   @@map("commercial_requests")
 }
 
@@ -243,6 +248,7 @@ model CommercialRequestNote {
   authorId  String            @map("author_id")
   author    User              @relation(fields: [authorId], references: [id])
 
+  @@index([requestId])
   @@map("commercial_request_notes")
 }
 
@@ -276,16 +282,18 @@ model TechnicalRequest {
   createdAt    DateTime               @default(now()) @map("created_at")
   updatedAt    DateTime               @updatedAt @map("updated_at")
 
-  assignedToId String? @map("assigned_to_id")
-  assignedTo   User?   @relation("AssignedConseiller", fields: [assignedToId], references: [id])
+  assignedToId String?                 @map("assigned_to_id")
+  assignedTo   User?                   @relation("AssignedConseiller", fields: [assignedToId], references: [id])
   photos       TechnicalRequestPhoto[]
   notes        TechnicalRequestNote[]
 
+  @@index([status])
+  @@index([createdAt])
   @@map("technical_requests")
 }
 
 model TechnicalRequestPhoto {
-  id        String @id @default(cuid())
+  id        String   @id @default(cuid())
   url       String
   filename  String
   createdAt DateTime @default(now()) @map("created_at")
@@ -293,6 +301,7 @@ model TechnicalRequestPhoto {
   requestId String           @map("request_id")
   request   TechnicalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
 
+  @@index([requestId])
   @@map("technical_request_photos")
 }
 
@@ -306,6 +315,7 @@ model TechnicalRequestNote {
   authorId  String           @map("author_id")
   author    User             @relation(fields: [authorId], references: [id])
 
+  @@index([requestId])
   @@map("technical_request_notes")
 }
 
@@ -320,28 +330,29 @@ enum TrainingModality {
 }
 
 model Training {
-  id            String            @id @default(cuid())
-  title         String
-  slug          String            @unique
-  description   String
-  objectives    String[]
-  targetAudience String           @map("target_audience")
-  duration      String?
-  modality      TrainingModality  @default(PRESENTIEL)
-  location      String?
-  date          DateTime?
-  endDate       DateTime?         @map("end_date")
-  price         String?
-  maxParticipants Int?            @map("max_participants")
-  isPublished   Boolean           @default(true) @map("is_published")
-  metaTitle     String?           @map("meta_title")
-  metaDescription String?        @map("meta_description")
-  createdAt     DateTime          @default(now()) @map("created_at")
-  updatedAt     DateTime          @updatedAt @map("updated_at")
+  id              String           @id @default(cuid())
+  title           String
+  slug            String           @unique
+  description     String
+  objectives      String[]
+  targetAudience  String           @map("target_audience")
+  duration        String?
+  modality        TrainingModality @default(PRESENTIEL)
+  location        String?
+  date            DateTime?
+  endDate         DateTime?        @map("end_date")
+  price           String?
+  maxParticipants Int?             @map("max_participants")
+  isPublished     Boolean          @default(true) @map("is_published")
+  metaTitle       String?          @map("meta_title")
+  metaDescription String?          @map("meta_description")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
 
   registrations TrainingRegistration[]
   documents     TrainingDocument[]
 
+  @@index([isPublished, date])
   @@map("trainings")
 }
 
@@ -372,6 +383,8 @@ model TrainingRegistration {
   trainingId String   @map("training_id")
   training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
 
+  @@index([trainingId, status])
+  @@index([createdAt])
   @@map("training_registrations")
 }
 
@@ -412,26 +425,28 @@ enum PartnershipStatus {
 }
 
 model PartnershipRequest {
-  id              String            @id @default(cuid())
-  status          PartnershipStatus @default(NOUVEAU)
-  partnerType     PartnerType       @map("partner_type")
-  organizationName String           @map("organization_name")
-  contactName     String            @map("contact_name")
-  phone           String
-  email           String?
-  website         String?
-  locality        String?
-  region          String?
-  proposal        String
-  objectives      String?
-  consent         Boolean           @default(false)
-  createdAt       DateTime          @default(now()) @map("created_at")
-  updatedAt       DateTime          @updatedAt @map("updated_at")
+  id               String            @id @default(cuid())
+  status           PartnershipStatus @default(NOUVEAU)
+  partnerType      PartnerType       @map("partner_type")
+  organizationName String            @map("organization_name")
+  contactName      String            @map("contact_name")
+  phone            String
+  email            String?
+  website          String?
+  locality         String?
+  region           String?
+  proposal         String
+  objectives       String?
+  consent          Boolean           @default(false)
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
 
-  assignedToId String? @map("assigned_to_id")
-  assignedTo   User?   @relation("AssignedPartnership", fields: [assignedToId], references: [id])
+  assignedToId String?                  @map("assigned_to_id")
+  assignedTo   User?                    @relation("AssignedPartnership", fields: [assignedToId], references: [id])
   notes        PartnershipRequestNote[]
 
+  @@index([status])
+  @@index([createdAt])
   @@map("partnership_requests")
 }
 
@@ -445,6 +460,7 @@ model PartnershipRequestNote {
   authorId  String             @map("author_id")
   author    User               @relation(fields: [authorId], references: [id])
 
+  @@index([requestId])
   @@map("partnership_request_notes")
 }
 
@@ -463,6 +479,7 @@ model ContactRequest {
   isRead    Boolean  @default(false) @map("is_read")
   createdAt DateTime @default(now()) @map("created_at")
 
+  @@index([isRead, createdAt])
   @@map("contact_requests")
 }
 
@@ -496,27 +513,29 @@ model Faq {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  @@index([isActive, sortOrder])
   @@map("faqs")
 }
 
 model Testimonial {
-  id           String   @id @default(cuid())
-  authorName   String   @map("author_name")
-  authorRole   String?  @map("author_role")
-  authorLocation String? @map("author_location")
-  content      String
-  imageUrl     String?  @map("image_url")
-  rating       Int?
-  isActive     Boolean  @default(true) @map("is_active")
-  sortOrder    Int      @default(0) @map("sort_order")
-  createdAt    DateTime @default(now()) @map("created_at")
+  id             String   @id @default(cuid())
+  authorName     String   @map("author_name")
+  authorRole     String?  @map("author_role")
+  authorLocation String?  @map("author_location")
+  content        String
+  imageUrl       String?  @map("image_url")
+  rating         Int?
+  isActive       Boolean  @default(true) @map("is_active")
+  sortOrder      Int      @default(0) @map("sort_order")
+  createdAt      DateTime @default(now()) @map("created_at")
 
+  @@index([isActive, sortOrder])
   @@map("testimonials")
 }
 
 model SiteSetting {
-  id    String @id @default(cuid())
-  key   String @unique
+  id    String  @id @default(cuid())
+  key   String  @unique
   value String
   label String?
 

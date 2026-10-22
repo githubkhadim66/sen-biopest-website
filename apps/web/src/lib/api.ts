@@ -1,7 +1,35 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+  ) {
+    super(message);
+  }
+}
+
+async function toApiError(res: Response): Promise<ApiError> {
+  const body = await res.json().catch(() => null);
+  let message: string | undefined;
+  if (body) {
+    // class-validator returns an array of messages
+    message = Array.isArray(body.message) ? body.message.join(' · ') : body.message;
+  }
+  if (!message) {
+    message =
+      res.status === 429
+        ? 'Trop de tentatives. Merci de patienter une minute.'
+        : res.status >= 500
+          ? 'Erreur serveur. Veuillez réessayer.'
+          : `Erreur ${res.status}`;
+  }
+  return new ApiError(message, res.status);
+}
+
 class ApiClient {
   private accessToken: string | null = null;
+  private refreshing: Promise<boolean> | null = null;
 
   setToken(token: string | null) {
     this.accessToken = token;
@@ -11,91 +39,70 @@ class ApiClient {
     return this.accessToken;
   }
 
-  private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...(options.headers as Record<string, string>),
-    };
-
-    if (this.accessToken) {
-      headers['Authorization'] = `Bearer ${this.accessToken}`;
-    }
-
-    const res = await fetch(`${API_URL}${path}`, {
-      ...options,
-      headers,
-      credentials: 'include',
-    });
-
-    if (res.status === 401 && this.accessToken) {
-      const refreshed = await this.refreshToken();
-      if (refreshed) {
-        headers['Authorization'] = `Bearer ${this.accessToken}`;
-        const retryRes = await fetch(`${API_URL}${path}`, { ...options, headers, credentials: 'include' });
-        if (!retryRes.ok) throw new Error(`API error: ${retryRes.status}`);
-        return retryRes.json();
-      }
-    }
-
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({ message: 'Erreur serveur' }));
-      throw new Error(error.message || `API error: ${res.status}`);
-    }
-
-    return res.json();
+  private async send(path: string, init: RequestInit, json: boolean): Promise<Response> {
+    const headers: Record<string, string> = { ...(init.headers as Record<string, string>) };
+    if (json) headers['Content-Type'] = 'application/json';
+    if (this.accessToken) headers['Authorization'] = `Bearer ${this.accessToken}`;
+    return fetch(`${API_URL}${path}`, { ...init, headers, credentials: 'include' });
   }
 
-  private async refreshToken(): Promise<boolean> {
-    try {
-      const res = await fetch(`${API_URL}/auth/refresh`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-      if (res.ok) {
-        const data = await res.json();
-        this.accessToken = data.accessToken;
-        return true;
-      }
-    } catch {}
-    this.accessToken = null;
-    return false;
+  private async request<T>(path: string, init: RequestInit = {}, json = true): Promise<T> {
+    let res = await this.send(path, init, json);
+
+    // Access token expired: refresh once (shared between concurrent calls) and retry
+    if (res.status === 401 && this.accessToken && !path.startsWith('/auth/')) {
+      if (await this.refreshToken()) res = await this.send(path, init, json);
+    }
+
+    if (!res.ok) throw await toApiError(res);
+    if (res.status === 204) return undefined as T;
+    const text = await res.text();
+    return (text ? JSON.parse(text) : undefined) as T;
   }
 
-  async get<T>(path: string): Promise<T> {
+  private refreshToken(): Promise<boolean> {
+    if (!this.refreshing) {
+      this.refreshing = fetch(`${API_URL}/auth/refresh`, { method: 'POST', credentials: 'include' })
+        .then(async (res) => {
+          if (!res.ok) return false;
+          const data = await res.json();
+          this.accessToken = data.accessToken;
+          return true;
+        })
+        .catch(() => false)
+        .then((ok) => {
+          if (!ok) this.accessToken = null;
+          this.refreshing = null;
+          return ok;
+        });
+    }
+    return this.refreshing;
+  }
+
+  get<T>(path: string): Promise<T> {
     return this.request<T>(path);
   }
 
-  async post<T>(path: string, data?: unknown): Promise<T> {
+  post<T>(path: string, data?: unknown): Promise<T> {
     return this.request<T>(path, {
       method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
+      body: data !== undefined ? JSON.stringify(data) : undefined,
     });
   }
 
-  async put<T>(path: string, data?: unknown): Promise<T> {
+  put<T>(path: string, data?: unknown): Promise<T> {
     return this.request<T>(path, {
       method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
+      body: data !== undefined ? JSON.stringify(data) : undefined,
     });
   }
 
-  async delete<T>(path: string): Promise<T> {
+  delete<T>(path: string): Promise<T> {
     return this.request<T>(path, { method: 'DELETE' });
   }
 
-  async upload<T>(path: string, formData: FormData): Promise<T> {
-    const headers: Record<string, string> = {};
-    if (this.accessToken) {
-      headers['Authorization'] = `Bearer ${this.accessToken}`;
-    }
-    const res = await fetch(`${API_URL}${path}`, {
-      method: 'POST',
-      headers,
-      body: formData,
-      credentials: 'include',
-    });
-    if (!res.ok) throw new Error(`Upload error: ${res.status}`);
-    return res.json();
+  upload<T>(path: string, formData: FormData): Promise<T> {
+    return this.request<T>(path, { method: 'POST', body: formData }, false);
   }
 }
 

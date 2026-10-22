@@ -1,31 +1,31 @@
+# syntax=docker/dockerfile:1
+# Build: docker build -f docker/Dockerfile.api -t senbiopest-api .
 FROM node:20-alpine AS base
-RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
-
-FROM base AS deps
+RUN apk add --no-cache openssl \
+ && corepack enable && corepack prepare pnpm@9.15.0 --activate
 WORKDIR /app
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
-COPY apps/api/package.json apps/api/
-COPY packages/types/package.json packages/types/
-COPY prisma/package.json prisma/
-RUN pnpm install --frozen-lockfile || pnpm install
 
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
-COPY --from=deps /app/packages/types/node_modules ./packages/types/node_modules || true
-COPY --from=deps /app/prisma/node_modules ./prisma/node_modules
+# ---- build ----
+FROM base AS build
 COPY . .
-RUN cd prisma && npx prisma generate
-RUN cd apps/api && npx nest build
+RUN pnpm install --frozen-lockfile --filter @sen-biopest/api... --filter prisma-config
+RUN pnpm --filter prisma-config exec prisma generate
+RUN pnpm --filter @sen-biopest/api build
+# Self-contained production folder (real files, no workspace symlinks)
+RUN pnpm --filter @sen-biopest/api deploy --prod /out \
+ && cp -r prisma /out/prisma \
+ && cd /out && ./node_modules/.bin/prisma generate --schema prisma/schema.prisma
 
-FROM base AS runner
+# ---- runtime ----
+FROM node:20-alpine AS runner
+RUN apk add --no-cache openssl
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=builder /app/apps/api/dist ./dist
-COPY --from=builder /app/apps/api/node_modules ./node_modules
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/prisma/schema.prisma ./prisma/schema.prisma
-RUN mkdir -p uploads
+COPY --from=build --chown=node:node /out ./
+RUN mkdir -p uploads && chown node:node uploads
+USER node
 EXPOSE 3001
-CMD ["node", "dist/main"]
+HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=5 \
+  CMD wget -qO- http://127.0.0.1:3001/api/health || exit 1
+# Apply pending database migrations, then start the API
+CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy --schema prisma/schema.prisma && node dist/main"]

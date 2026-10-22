@@ -58,7 +58,7 @@ const IMAGES = {
   market: 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800&q=80',
 };
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace('/api', '');
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '');
 
 function resolveImageUrl(url: string): string {
   if (!url) return '';
@@ -78,12 +78,43 @@ interface FeaturedProduct {
   pests: string[];
 }
 
+interface Testimonial {
+  name: string;
+  role: string;
+  location: string;
+  text: string;
+  rating: number;
+}
+
+// Shown until testimonials are managed from the back-office
+const FALLBACK_TESTIMONIALS: Testimonial[] = [
+              { name: 'Mamadou Diallo', role: 'Producteur maraîcher', location: 'Thiès', text: 'Depuis que j\'utilise AromaProtect, mes tomates sont mieux protégées et je n\'utilise plus de produits chimiques. Mes clients apprécient la qualité de mes récoltes.', rating: 5 },
+              { name: 'Fatou Sow', role: 'Présidente GIE Teranga', location: 'Kaolack', text: 'Sen Biopest a formé nos membres et nous a accompagnés avec des solutions adaptées. Nos récoltes sont meilleures et nos coûts ont baissé.', rating: 5 },
+              { name: 'Ibrahima Ndiaye', role: 'Jardinier urbain', location: 'Dakar', text: 'Des produits simples à utiliser et vraiment efficaces. Je recommande Sen Biopest à tous les jardiniers qui veulent protéger leurs plantes naturellement.', rating: 4 },
+            ];
+
 export default function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(FALLBACK_TESTIMONIALS);
 
   useEffect(() => {
     api.get<{ data: FeaturedProduct[] }>('/products?limit=6')
       .then((res) => setFeaturedProducts(res.data || []))
+      .catch(() => {});
+    api
+      .get<{ authorName: string; authorRole: string | null; authorLocation: string | null; content: string; rating: number | null }[]>('/content/testimonials')
+      .then((items) => {
+        if (items.length === 0) return;
+        setTestimonials(
+          items.slice(0, 3).map((t) => ({
+            name: t.authorName,
+            role: t.authorRole || '',
+            location: t.authorLocation || '',
+            text: t.content,
+            rating: t.rating ?? 5,
+          })),
+        );
+      })
       .catch(() => {});
   }, []);
 
@@ -615,11 +646,7 @@ export default function HomePage() {
           </FadeInUp>
 
           <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { name: 'Mamadou Diallo', role: 'Producteur maraîcher', location: 'Thiès', text: 'Depuis que j\'utilise AromaProtect, mes tomates sont mieux protégées et je n\'utilise plus de produits chimiques. Mes clients apprécient la qualité de mes récoltes.', rating: 5 },
-              { name: 'Fatou Sow', role: 'Présidente GIE Teranga', location: 'Kaolack', text: 'Sen Biopest a formé nos membres et nous a accompagnés avec des solutions adaptées. Nos récoltes sont meilleures et nos coûts ont baissé.', rating: 5 },
-              { name: 'Ibrahima Ndiaye', role: 'Jardinier urbain', location: 'Dakar', text: 'Des produits simples à utiliser et vraiment efficaces. Je recommande Sen Biopest à tous les jardiniers qui veulent protéger leurs plantes naturellement.', rating: 4 },
-            ].map((t) => (
+            {testimonials.map((t) => (
               <StaggerItem key={t.name}>
                 <motion.div whileHover={{ y: -6 }} transition={{ type: 'spring', stiffness: 300 }}>
                   <Card className="h-full border-0 shadow-lg hover:shadow-xl transition-shadow">
@@ -637,7 +664,7 @@ export default function HomePage() {
                         </div>
                         <div>
                           <p className="font-bold text-gray-900">{t.name}</p>
-                          <p className="text-xs text-gray-500">{t.role} — {t.location}</p>
+                          <p className="text-xs text-gray-500">{[t.role, t.location].filter(Boolean).join(' — ')}</p>
                         </div>
                       </div>
                     </CardBody>

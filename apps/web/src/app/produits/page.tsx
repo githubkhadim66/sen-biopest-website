@@ -19,12 +19,13 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { cn, getWhatsAppUrl, WHATSAPP_NUMBER } from '@/lib/utils';
+import { cn, getWhatsAppUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { useSiteSettings } from '@/hooks/use-site-settings';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -59,7 +60,7 @@ interface ProductsResponse {
 
 const PER_PAGE = 12;
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace('/api', '');
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '');
 
 function resolveImageUrl(url: string): string {
   if (url.startsWith('http')) return url;
@@ -201,6 +202,8 @@ function FilterSidebar({
 }
 
 function ProductCard({ product }: { product: Product }) {
+  const { whatsappNumber: WHATSAPP_NUMBER } = useSiteSettings();
+
   const whatsappUrl = getWhatsAppUrl(
     WHATSAPP_NUMBER,
     `Bonjour Sen Biopest, je suis interesse(e) par le produit "${product.name}". Pouvez-vous me donner plus d'informations ?`,
@@ -310,6 +313,8 @@ function ProductCard({ product }: { product: Product }) {
 }
 
 function FeaturedProductHighlight({ product }: { product: Product }) {
+  const { whatsappNumber: WHATSAPP_NUMBER } = useSiteSettings();
+
   const whatsappUrl = getWhatsAppUrl(
     WHATSAPP_NUMBER,
     `Bonjour Sen Biopest, je suis interesse(e) par votre produit phare "${product.name}". Pouvez-vous m'en dire plus ?`,
@@ -455,6 +460,8 @@ function Pagination({
 // ---------------------------------------------------------------------------
 
 export default function ProduitsPage() {
+  const { whatsappNumber: WHATSAPP_NUMBER } = useSiteSettings();
+
   // Filter state
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
