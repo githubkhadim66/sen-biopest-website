@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
+import { MotionConfig } from 'framer-motion';
 import { CartProvider } from '@/hooks/use-cart';
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -21,7 +22,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <CartProvider>{children}</CartProvider>
+      {/* Honour the OS "reduce motion" setting for every animation on the site */}
+      <MotionConfig reducedMotion="user">
+        <CartProvider>{children}</CartProvider>
+      </MotionConfig>
     </QueryClientProvider>
   );
 }

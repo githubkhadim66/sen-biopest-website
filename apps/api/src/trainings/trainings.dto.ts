@@ -6,8 +6,10 @@ import {
   IsEmail,
   IsArray,
   IsInt,
+  Min,
   IsDateString,
 } from 'class-validator';
+import { PartialType } from '@nestjs/swagger';
 import { TrainingModality, RegistrationStatus, ActorType } from '@prisma/client';
 
 export class CreateTrainingDto {
@@ -50,6 +52,7 @@ export class CreateTrainingDto {
 
   @IsOptional()
   @IsInt()
+  @Min(1)
   maxParticipants?: number;
 
   @IsOptional()
@@ -65,7 +68,7 @@ export class CreateTrainingDto {
   metaDescription?: string;
 }
 
-export class UpdateTrainingDto extends CreateTrainingDto {}
+export class UpdateTrainingDto extends PartialType(CreateTrainingDto) {}
 
 export class CreateRegistrationDto {
   @IsString()

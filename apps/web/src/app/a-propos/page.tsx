@@ -17,11 +17,11 @@ import {
 } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'A propos',
+  title: 'À propos',
   description:
     'Découvrez Sen Biopest : notre mission, notre vision et nos valeurs. Biopesticides naturels à base de plantes locales sénégalaises pour une agriculture durable.',
   openGraph: {
-    title: 'A propos de Sen Biopest',
+    title: 'À propos de Sen Biopest',
     description:
       'Sen Biopest développe des biopesticides naturels à partir de plantes locales du Sénégal. Découvrez notre engagement pour une agriculture durable et accessible.',
   },
@@ -70,10 +70,11 @@ export default function AProposPage() {
       <section className="relative bg-gradient-to-br from-primary-50 via-white to-green-50 overflow-hidden">
         <div className="container-wide py-16 sm:py-20 lg:py-28">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-primary-100 text-primary-700 text-sm font-medium px-3 py-1 rounded-full mb-6">
-              <Leaf className="w-4 h-4" />
-              Qui sommes-nous
-            </div>
+            <nav aria-label="Fil d'Ariane" className="text-sm text-gray-500 mb-4">
+              <Link href="/" className="hover:text-gray-800">Accueil</Link>
+              <span className="mx-2" aria-hidden="true">/</span>
+              <span className="text-gray-700">À propos</span>
+            </nav>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-6">
               Des biopesticides naturels,{' '}
               <span className="text-primary-600">issus du terroir sénégalais</span>
@@ -163,13 +164,13 @@ export default function AProposPage() {
             <div className="space-y-6">
               <div className="inline-flex items-center gap-2 bg-secondary-100 text-secondary-700 text-sm font-medium px-3 py-1 rounded-full">
                 <Award className="w-4 h-4" />
-                Notre equipe
+                Notre équipe
               </div>
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                Une equipe passionnee par l'agriculture durable
+                Une équipe passionnée par l'agriculture durable
               </h2>
               <p className="text-gray-600 leading-relaxed">
-                Sen Biopest a ete fondee par des agronomes et chercheurs sénégalais convaincus que les plantes locales recèlent des solutions puissantes pour protéger les cultures. Notre équipe combine expertise scientifique, connaissance du terrain et engagement communautaire.
+                Sen Biopest a été fondée par des agronomes et chercheurs sénégalais convaincus que les plantes locales recèlent des solutions puissantes pour protéger les cultures. Notre équipe combine expertise scientifique, connaissance du terrain et engagement communautaire.
               </p>
               <p className="text-gray-600 leading-relaxed">
                 Nous travaillons en étroite collaboration avec les universités, les centres de recherche agricole et les organisations paysannes pour développer des solutions ancrées dans les réalités locales.

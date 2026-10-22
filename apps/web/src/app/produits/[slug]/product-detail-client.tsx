@@ -24,11 +24,12 @@ import {
   ImageOff,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { cn, getWhatsAppUrl, WHATSAPP_NUMBER } from '@/lib/utils';
+import { cn, getWhatsAppUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/hooks/use-cart';
+import { useSiteSettings } from '@/hooks/use-site-settings';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -125,7 +126,7 @@ function Breadcrumb({ productName }: { productName: string }) {
   );
 }
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace('/api', '');
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '');
 
 function resolveImageUrl(url: string): string {
   if (url.startsWith('http')) return url;
@@ -268,6 +269,8 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
 // ---------------------------------------------------------------------------
 
 function CTABlock({ product }: { product: ProductDetail }) {
+  const { whatsappNumber: WHATSAPP_NUMBER } = useSiteSettings();
+
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
 
@@ -306,15 +309,10 @@ function CTABlock({ product }: { product: ProductDetail }) {
         </Button>
       </Link>
 
-      <button
-        className="block w-full"
-        onClick={handleAddToCart}
-      >
-        <Button size="lg" variant="secondary" className="w-full">
-          <ShoppingCart className="w-5 h-5" />
-          {added ? 'Ajoute au panier !' : 'Ajouter au panier'}
-        </Button>
-      </button>
+      <Button size="lg" variant="secondary" className="w-full" onClick={handleAddToCart}>
+        <ShoppingCart className="w-5 h-5" />
+        {added ? 'Ajouté au panier !' : 'Ajouter au panier'}
+      </Button>
 
       <a
         href={whatsappDevis}
@@ -348,6 +346,8 @@ function CTABlock({ product }: { product: ProductDetail }) {
 // ---------------------------------------------------------------------------
 
 export default function ProductDetailClient({ slug }: { slug: string }) {
+  const { whatsappNumber: WHATSAPP_NUMBER } = useSiteSettings();
+
   const { data: product, isLoading, isError, error } = useQuery<ProductDetail>({
     queryKey: ['product', slug],
     queryFn: () => api.get<ProductDetail>(`/products/${slug}`),
@@ -626,7 +626,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
         <section className="section-padding bg-gray-50">
           <div className="container-narrow">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
-              Questions frequentes
+              Questions fréquentes
             </h2>
             <FAQAccordion faq={product.faq} />
           </div>

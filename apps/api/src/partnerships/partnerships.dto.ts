@@ -1,5 +1,6 @@
 import { IsString, IsOptional, IsBoolean, IsEnum, IsEmail } from 'class-validator';
 import { PartnerType, PartnershipStatus } from '@prisma/client';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 export class CreatePartnershipRequestDto {
   @IsEnum(PartnerType)
@@ -53,4 +54,10 @@ export class UpdatePartnershipStatusDto {
 export class AddPartnershipNoteDto {
   @IsString()
   content: string;
+}
+
+export class PartnershipQueryDto extends PaginationDto {
+  @IsOptional()
+  @IsEnum(PartnershipStatus)
+  status?: PartnershipStatus;
 }

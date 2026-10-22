@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select } from '@/components/ui/select';
 import { Card, CardBody } from '@/components/ui/card';
 import { api } from '@/lib/api';
-import { getWhatsAppUrl, WHATSAPP_NUMBER, formatPhone } from '@/lib/utils';
+import { getWhatsAppUrl, formatPhone } from '@/lib/utils';
 import {
   MapPin,
   Phone,
@@ -22,6 +22,7 @@ import {
   AlertCircle,
   Send,
 } from 'lucide-react';
+import { useSiteSettings, type SiteSettings } from '@/hooks/use-site-settings';
 
 const contactSchema = z.object({
   name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
@@ -48,23 +49,23 @@ const subjectOptions = [
   { value: 'autre', label: 'Autre' },
 ];
 
-const contactInfo = [
+const buildContactInfo = (site: SiteSettings) => [
   {
     icon: MapPin,
     title: 'Adresse',
-    content: 'Dakar, Sénégal',
-    detail: 'Zone industrielle, Lot 42',
+    content: site.address,
+    detail: 'Sur rendez-vous',
   },
   {
     icon: Phone,
     title: 'Téléphone',
-    content: formatPhone('+221770000000'),
+    content: formatPhone(site.phone),
     detail: 'Lundi - Vendredi, 8h - 18h',
   },
   {
     icon: Mail,
     title: 'Email',
-    content: 'contact@senbiopest.sn',
+    content: site.email,
     detail: 'Réponse sous 24h',
   },
   {
@@ -76,6 +77,10 @@ const contactInfo = [
 ];
 
 export default function ContactPage() {
+  const site = useSiteSettings();
+  const WHATSAPP_NUMBER = site.whatsappNumber;
+  const contactInfo = buildContactInfo(site);
+
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -122,10 +127,11 @@ export default function ContactPage() {
       <section className="relative bg-gradient-to-br from-primary-50 via-white to-green-50 overflow-hidden">
         <div className="container-wide py-16 sm:py-20 lg:py-24">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-primary-100 text-primary-700 text-sm font-medium px-3 py-1 rounded-full mb-6">
-              <Mail className="w-4 h-4" />
-              Contact
-            </div>
+            <nav aria-label="Fil d'Ariane" className="text-sm text-gray-500 mb-4">
+              <Link href="/" className="hover:text-gray-800">Accueil</Link>
+              <span className="mx-2" aria-hidden="true">/</span>
+              <span className="text-gray-700">Contact</span>
+            </nav>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-6">
               Contactez-nous
             </h1>

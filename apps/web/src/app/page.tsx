@@ -8,37 +8,24 @@ import { Button } from '@/components/ui/button';
 import { Card, CardBody } from '@/components/ui/card';
 import {
   Leaf,
-  Shield,
-  Users,
   Handshake,
   ArrowRight,
   CheckCircle,
   Sprout,
   FlaskConical,
   HeartHandshake,
-  MessageCircle,
   Phone,
   ChevronRight,
   Star,
   GraduationCap,
-  TrendingUp,
-  MapPin,
   Quote,
 } from 'lucide-react';
 import {
   FadeInUp,
   FadeInFrom,
-  ScaleIn,
   StaggerContainer,
   StaggerItem,
-  AnimatedCounter,
-  FloatingElement,
-  MagneticWrapper,
-  GradientText,
-  ParallaxImage,
-  RevealLine,
 } from '@/components/ui/animations';
-import { motion } from 'framer-motion';
 
 // Real photos from Unsplash — agriculture, Africa, crops
 const IMAGES = {
@@ -58,7 +45,7 @@ const IMAGES = {
   market: 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800&q=80',
 };
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace('/api', '');
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '');
 
 function resolveImageUrl(url: string): string {
   if (!url) return '';
@@ -78,12 +65,43 @@ interface FeaturedProduct {
   pests: string[];
 }
 
+interface Testimonial {
+  name: string;
+  role: string;
+  location: string;
+  text: string;
+  rating: number;
+}
+
+// Shown until testimonials are managed from the back-office
+const FALLBACK_TESTIMONIALS: Testimonial[] = [
+              { name: 'Mamadou Diallo', role: 'Producteur maraîcher', location: 'Thiès', text: 'Depuis que j\'utilise AromaProtect, mes tomates sont mieux protégées et je n\'utilise plus de produits chimiques. Mes clients apprécient la qualité de mes récoltes.', rating: 5 },
+              { name: 'Fatou Sow', role: 'Présidente GIE Teranga', location: 'Kaolack', text: 'Sen Biopest a formé nos membres et nous a accompagnés avec des solutions adaptées. Nos récoltes sont meilleures et nos coûts ont baissé.', rating: 5 },
+              { name: 'Ibrahima Ndiaye', role: 'Jardinier urbain', location: 'Dakar', text: 'Des produits simples à utiliser et vraiment efficaces. Je recommande Sen Biopest à tous les jardiniers qui veulent protéger leurs plantes naturellement.', rating: 4 },
+            ];
+
 export default function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(FALLBACK_TESTIMONIALS);
 
   useEffect(() => {
     api.get<{ data: FeaturedProduct[] }>('/products?limit=6')
       .then((res) => setFeaturedProducts(res.data || []))
+      .catch(() => {});
+    api
+      .get<{ authorName: string; authorRole: string | null; authorLocation: string | null; content: string; rating: number | null }[]>('/content/testimonials')
+      .then((items) => {
+        if (items.length === 0) return;
+        setTestimonials(
+          items.slice(0, 3).map((t) => ({
+            name: t.authorName,
+            role: t.authorRole || '',
+            location: t.authorLocation || '',
+            text: t.content,
+            rating: t.rating ?? 5,
+          })),
+        );
+      })
       .catch(() => {});
   }, []);
 
@@ -104,33 +122,20 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-gradient-to-r from-gray-900/85 via-gray-900/60 to-gray-900/30" />
         </div>
 
-        {/* Floating decorative elements */}
-        <FloatingElement className="absolute top-20 right-20 hidden xl:block z-10" amplitude={15} duration={6}>
-          <div className="w-20 h-20 bg-primary-500/20 rounded-full blur-xl" />
-        </FloatingElement>
-        <FloatingElement className="absolute bottom-32 right-40 hidden xl:block z-10" amplitude={10} duration={5}>
-          <div className="w-14 h-14 bg-secondary-400/20 rounded-full blur-lg" />
-        </FloatingElement>
-
         <div className="container-wide relative z-10 py-20 lg:py-32">
           <div className="max-w-3xl">
             <FadeInUp delay={0.1}>
-              <motion.div
-                className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md text-white text-sm font-medium px-4 py-2 rounded-full mb-8 border border-white/20"
-                whileHover={{ scale: 1.05 }}
-              >
-                <Leaf className="w-4 h-4 text-primary-400" />
-                Biopesticides naturels du Sénégal
-                <span className="w-2 h-2 bg-primary-400 rounded-full animate-pulse" />
-              </motion.div>
+              <p className="text-sm font-medium text-primary-300 mb-6">
+                Biopesticides à base de plantes locales — Sénégal
+              </p>
             </FadeInUp>
 
-            <RevealLine delay={0.2}>
+            <FadeInUp delay={0.1}>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-[1.1] mb-6">
                 Protégez vos cultures{' '}
-                <GradientText className="font-extrabold">naturellement</GradientText>
+                <span className="text-primary-400">naturellement</span>
               </h1>
-            </RevealLine>
+            </FadeInUp>
 
             <FadeInUp delay={0.5}>
               <p className="text-lg sm:text-xl text-gray-200 mb-10 max-w-2xl leading-relaxed">
@@ -141,63 +146,37 @@ export default function HomePage() {
 
             <FadeInUp delay={0.7}>
               <div className="flex flex-wrap gap-4">
-                <MagneticWrapper>
                   <Link href="/produits">
-                    <Button size="lg" className="text-base px-8 py-4 shadow-xl shadow-primary-600/30">
+                    <Button size="lg" className="text-base px-8 py-4">
                       Découvrir nos produits <ArrowRight className="w-5 h-5" />
                     </Button>
                   </Link>
-                </MagneticWrapper>
-                <MagneticWrapper>
                   <Link href="/contact">
-                    <Button variant="outline" size="lg" className="text-base px-8 py-4 border-white/30 text-white hover:bg-white/10 backdrop-blur-sm">
+                    <Button variant="outline" size="lg" className="text-base px-8 py-4 border-white/30 text-white hover:bg-white/10">
                       Demander un devis
                     </Button>
                   </Link>
-                </MagneticWrapper>
               </div>
             </FadeInUp>
 
             {/* Trust bar */}
             <FadeInUp delay={0.9}>
-              <div className="mt-12 flex flex-wrap items-center gap-6 text-sm text-gray-300">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-primary-400" />
-                  <span>100% naturel</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-primary-400" />
-                  <span>Fabriqué au Sénégal</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-primary-400" />
-                  <span>500+ producteurs</span>
-                </div>
-              </div>
+              <p className="mt-10 text-sm text-gray-300">
+                Ingrédients naturels · Fabriqué au Sénégal · Plus de 500 producteurs accompagnés
+              </p>
             </FadeInUp>
           </div>
         </div>
 
-        {/* Scroll indicator */}
-        <motion.div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center pt-2">
-            <div className="w-1.5 h-3 bg-white/60 rounded-full" />
-          </div>
-        </motion.div>
       </section>
 
       {/* ============ PRODUITS PHARES ============ */}
       <section className="section-padding bg-white overflow-hidden">
         <div className="container-wide">
           <FadeInUp>
-            <div className="text-center mb-16">
-              <span className="inline-block text-primary-600 font-semibold text-sm uppercase tracking-wider mb-3">Nos solutions</span>
+            <div className="mb-12 max-w-2xl">
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Produits phares</h2>
-              <p className="text-gray-600 max-w-2xl mx-auto text-lg">
+              <p className="text-gray-600 text-lg">
                 Des biopesticides formulés à partir de plantes locales sénégalaises, testés et approuvés par les producteurs.
               </p>
             </div>
@@ -209,14 +188,14 @@ export default function HomePage() {
                 const imageUrl = product.primaryImage || product.images?.[0]?.url;
                 return (
                   <StaggerItem key={product.id}>
-                    <motion.div whileHover={{ y: -8 }} transition={{ type: 'spring', stiffness: 300 }} className="h-full">
+                    <div className="h-full">
                       <Card hover className={`overflow-hidden h-full ${product.isFeatured ? 'border-primary-200 ring-2 ring-primary-100' : ''}`}>
                         <div className="relative h-56 overflow-hidden bg-gradient-to-br from-primary-50 to-green-50">
                           {imageUrl ? (
                             <img
                               src={resolveImageUrl(imageUrl)}
                               alt={product.name}
-                              className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+                              className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                             />
                           ) : (
                             <div className="flex items-center justify-center h-full">
@@ -254,7 +233,7 @@ export default function HomePage() {
                           </div>
                         </CardBody>
                       </Card>
-                    </motion.div>
+                    </div>
                   </StaggerItem>
                 );
               })}
@@ -277,13 +256,11 @@ export default function HomePage() {
 
           <FadeInUp delay={0.3}>
             <div className="text-center mt-12">
-              <MagneticWrapper className="inline-block">
                 <Link href="/produits">
                   <Button variant="ghost" size="lg">
                     Voir tout le catalogue <ChevronRight className="w-5 h-5" />
                   </Button>
                 </Link>
-              </MagneticWrapper>
             </div>
           </FadeInUp>
         </div>
@@ -293,10 +270,9 @@ export default function HomePage() {
       <section className="section-padding bg-gray-50 overflow-hidden">
         <div className="container-wide">
           <FadeInUp>
-            <div className="text-center mb-16">
-              <span className="inline-block text-primary-600 font-semibold text-sm uppercase tracking-wider mb-3">Ce que nous offrons</span>
+            <div className="mb-12 max-w-2xl">
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Nos services</h2>
-              <p className="text-gray-600 max-w-2xl mx-auto text-lg">
+              <p className="text-gray-600 text-lg">
                 Au-delà des produits, Sen Biopest accompagne les producteurs avec des services complets.
               </p>
             </div>
@@ -311,18 +287,18 @@ export default function HomePage() {
             ].map((s) => (
               <StaggerItem key={s.title}>
                 <Link href={s.href}>
-                  <motion.div whileHover={{ y: -6 }} transition={{ type: 'spring', stiffness: 300 }}>
+                  <div>
                     <Card hover className="h-full overflow-hidden group">
                       <div className="relative h-40 overflow-hidden">
                         <Image
                           src={s.img}
                           alt={s.title}
                           fill
-                          className="object-cover transition-transform duration-700 group-hover:scale-110"
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                        <div className="absolute bottom-3 left-3 w-10 h-10 bg-white/90 backdrop-blur rounded-lg flex items-center justify-center">
+                        <div className="absolute bottom-3 left-3 w-10 h-10 bg-white rounded-lg flex items-center justify-center">
                           <s.icon className="w-5 h-5 text-primary-600" />
                         </div>
                       </div>
@@ -331,7 +307,7 @@ export default function HomePage() {
                         <p className="text-sm text-gray-600">{s.desc}</p>
                       </CardBody>
                     </Card>
-                  </motion.div>
+                  </div>
                 </Link>
               </StaggerItem>
             ))}
@@ -354,10 +330,9 @@ export default function HomePage() {
 
         <div className="container-wide relative z-10">
           <FadeInUp>
-            <div className="text-center mb-16">
-              <span className="inline-block text-primary-300 font-semibold text-sm uppercase tracking-wider mb-3">Résultats concrets</span>
+            <div className="mb-12 max-w-2xl">
               <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Notre impact</h2>
-              <p className="text-primary-100 max-w-2xl mx-auto text-lg">
+              <p className="text-primary-100 text-lg">
                 Des résultats mesurables pour les producteurs et l&apos;environnement.
               </p>
             </div>
@@ -365,25 +340,20 @@ export default function HomePage() {
 
           <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
             {[
-              { value: 500, suffix: '+', label: 'Producteurs accompagnés', icon: Users },
-              { value: 14, suffix: '', label: 'Régions couvertes', icon: MapPin },
-              { value: 100, suffix: '%', label: 'Ingrédients naturels', icon: Leaf },
-              { value: 30, suffix: '%', label: 'Réduction des pertes', icon: TrendingUp },
+              { value: 500, suffix: '+', label: 'Producteurs accompagnés' },
+              { value: 14, suffix: '', label: 'Régions couvertes' },
+              { value: 100, suffix: '%', label: 'Ingrédients naturels' },
+              { value: 30, suffix: '%', label: 'Réduction des pertes' },
             ].map((stat) => (
               <StaggerItem key={stat.label}>
-                <motion.div
+                <div
                   className="text-center group"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ type: 'spring', stiffness: 300 }}
                 >
-                  <div className="w-16 h-16 bg-white/10 backdrop-blur rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-white/20 transition-colors">
-                    <stat.icon className="w-7 h-7 text-primary-300" />
-                  </div>
                   <div className="text-4xl sm:text-5xl font-bold text-white mb-2">
-                    <AnimatedCounter value={stat.value} suffix={stat.suffix} />
+                    {stat.value}{stat.suffix}
                   </div>
                   <div className="text-sm text-primary-200 font-medium">{stat.label}</div>
-                </motion.div>
+                </div>
               </StaggerItem>
             ))}
           </StaggerContainer>
@@ -394,33 +364,29 @@ export default function HomePage() {
       <section className="section-padding bg-white overflow-hidden">
         <div className="container-wide">
           <FadeInUp>
-            <div className="text-center mb-16">
-              <span className="inline-block text-primary-600 font-semibold text-sm uppercase tracking-wider mb-3">Simple et rapide</span>
+            <div className="mb-12 max-w-2xl">
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Comment ça marche ?</h2>
             </div>
           </FadeInUp>
 
           <div className="relative">
-            {/* Connecting line */}
-            <div className="hidden md:block absolute top-24 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-primary-200 via-primary-400 to-primary-200" />
 
             <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-10">
               {[
-                { step: '01', title: 'Identifiez votre besoin', desc: 'Consultez notre catalogue, filtrez par culture ou ravageur et trouvez le produit adapté.', icon: '🔍' },
-                { step: '02', title: 'Demandez un devis', desc: 'Remplissez notre formulaire ou contactez-nous via WhatsApp. Réponse sous 24h.', icon: '📋' },
-                { step: '03', title: 'Recevez & appliquez', desc: 'Nous vous livrons et vous accompagnons avec des conseils personnalisés.', icon: '🌱' },
+                { step: '01', title: 'Identifiez votre besoin', desc: 'Consultez notre catalogue, filtrez par culture ou ravageur et trouvez le produit adapté.' },
+                { step: '02', title: 'Demandez un devis', desc: 'Remplissez notre formulaire ou contactez-nous via WhatsApp. Réponse sous 24h.' },
+                { step: '03', title: 'Recevez & appliquez', desc: 'Nous vous livrons et vous accompagnons avec des conseils personnalisés.' },
               ].map((item) => (
                 <StaggerItem key={item.step}>
-                  <motion.div
+                  <div
                     className="text-center relative"
-                    whileHover={{ y: -4 }}
                   >
-                    <div className="relative z-10 w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-700 text-white font-bold text-2xl rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-primary-500/30">
+                    <div className="text-4xl font-bold text-primary-600 mb-4">
                       {item.step}
                     </div>
                     <h3 className="font-bold text-gray-900 text-lg mb-3">{item.title}</h3>
                     <p className="text-gray-600 leading-relaxed">{item.desc}</p>
-                  </motion.div>
+                  </div>
                 </StaggerItem>
               ))}
             </StaggerContainer>
@@ -434,7 +400,6 @@ export default function HomePage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <FadeInFrom direction="left">
               <div>
-                <span className="inline-block text-primary-600 font-semibold text-sm uppercase tracking-wider mb-3">Expertise terrain</span>
                 <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">Accompagnement technique</h2>
                 <p className="text-gray-600 text-lg mb-8 leading-relaxed">
                   Un problème sur vos cultures ? Nos conseillers vous aident à identifier le ravageur et vous proposent une solution adaptée et naturelle.
@@ -447,25 +412,20 @@ export default function HomePage() {
                     'Suivi de la prise en charge',
                   ].map((item, i) => (
                     <StaggerItem key={item}>
-                      <motion.li
+                      <li
                         className="flex items-start gap-3 text-gray-700"
-                        whileHover={{ x: 4 }}
                       >
-                        <div className="w-6 h-6 bg-primary-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                          <CheckCircle className="w-4 h-4 text-primary-600" />
-                        </div>
+                        <CheckCircle className="w-5 h-5 text-primary-600 shrink-0 mt-0.5" />
                         {item}
-                      </motion.li>
+                      </li>
                     </StaggerItem>
                   ))}
                 </StaggerContainer>
-                <MagneticWrapper className="inline-block">
                   <Link href="/accompagnement-technique">
                     <Button size="lg">
                       Demander un accompagnement <ArrowRight className="w-5 h-5" />
                     </Button>
                   </Link>
-                </MagneticWrapper>
               </div>
             </FadeInFrom>
 
@@ -480,22 +440,6 @@ export default function HomePage() {
                     className="w-full h-auto object-cover"
                   />
                 </div>
-                {/* Floating card */}
-                <motion.div
-                  className="absolute -bottom-6 -left-6 bg-white rounded-xl shadow-xl p-4 border border-gray-100"
-                  animate={{ y: [-4, 4, -4] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-                      <CheckCircle className="w-5 h-5 text-primary-600" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-gray-900 text-sm">Diagnostic rapide</p>
-                      <p className="text-xs text-gray-500">Réponse sous 24h</p>
-                    </div>
-                  </div>
-                </motion.div>
               </div>
             </FadeInFrom>
           </div>
@@ -517,19 +461,11 @@ export default function HomePage() {
                     className="w-full h-auto object-cover"
                   />
                 </div>
-                <motion.div
-                  className="absolute -top-4 -right-4 bg-primary-600 text-white rounded-xl shadow-xl p-4"
-                  animate={{ y: [-4, 4, -4] }}
-                  transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-                >
-                  <GraduationCap className="w-8 h-8" />
-                </motion.div>
               </div>
             </FadeInFrom>
 
             <FadeInFrom direction="right" className="order-1 lg:order-2">
               <div>
-                <span className="inline-block text-primary-600 font-semibold text-sm uppercase tracking-wider mb-3">Renforcement des capacités</span>
                 <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">Formations pratiques</h2>
                 <p className="text-gray-600 text-lg mb-8 leading-relaxed">
                   Des sessions de formation conçues pour transmettre les bonnes pratiques d&apos;utilisation des biopesticides et de protection intégrée des cultures.
@@ -547,13 +483,11 @@ export default function HomePage() {
                     </div>
                   ))}
                 </div>
-                <MagneticWrapper className="inline-block">
                   <Link href="/formations">
                     <Button size="lg">
                       Voir les formations <ArrowRight className="w-5 h-5" />
                     </Button>
                   </Link>
-                </MagneticWrapper>
               </div>
             </FadeInFrom>
           </div>
@@ -575,7 +509,6 @@ export default function HomePage() {
 
         <div className="container-wide relative z-10 text-center">
           <FadeInUp>
-            <span className="inline-block text-secondary-300 font-semibold text-sm uppercase tracking-wider mb-3">Ensemble, plus loin</span>
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">Devenez partenaire</h2>
             <p className="text-earth-100 max-w-2xl mx-auto mb-10 text-lg leading-relaxed">
               Fournisseurs, distributeurs, institutions, programmes : collaborons pour une agriculture durable au Sénégal et en Afrique de l&apos;Ouest.
@@ -585,7 +518,7 @@ export default function HomePage() {
           <FadeInUp delay={0.3}>
             <div className="flex flex-wrap justify-center gap-4 mb-10">
               {['Distributeurs', 'Institutions', 'Laboratoires', 'Programmes', 'Financeurs'].map((type) => (
-                <span key={type} className="bg-white/10 backdrop-blur text-white text-sm px-4 py-2 rounded-full border border-white/20">
+                <span key={type} className="text-white/90 text-sm px-3 py-1.5 rounded-md border border-white/25">
                   {type}
                 </span>
               ))}
@@ -593,13 +526,11 @@ export default function HomePage() {
           </FadeInUp>
 
           <FadeInUp delay={0.5}>
-            <MagneticWrapper className="inline-block">
               <Link href="/partenariats">
                 <Button size="lg" className="text-base px-8">
                   <HeartHandshake className="w-5 h-5" /> Proposer un partenariat
                 </Button>
               </Link>
-            </MagneticWrapper>
           </FadeInUp>
         </div>
       </section>
@@ -608,20 +539,15 @@ export default function HomePage() {
       <section className="section-padding bg-white overflow-hidden">
         <div className="container-wide">
           <FadeInUp>
-            <div className="text-center mb-16">
-              <span className="inline-block text-primary-600 font-semibold text-sm uppercase tracking-wider mb-3">Retours terrain</span>
+            <div className="mb-12 max-w-2xl">
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Ils nous font confiance</h2>
             </div>
           </FadeInUp>
 
           <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { name: 'Mamadou Diallo', role: 'Producteur maraîcher', location: 'Thiès', text: 'Depuis que j\'utilise AromaProtect, mes tomates sont mieux protégées et je n\'utilise plus de produits chimiques. Mes clients apprécient la qualité de mes récoltes.', rating: 5 },
-              { name: 'Fatou Sow', role: 'Présidente GIE Teranga', location: 'Kaolack', text: 'Sen Biopest a formé nos membres et nous a accompagnés avec des solutions adaptées. Nos récoltes sont meilleures et nos coûts ont baissé.', rating: 5 },
-              { name: 'Ibrahima Ndiaye', role: 'Jardinier urbain', location: 'Dakar', text: 'Des produits simples à utiliser et vraiment efficaces. Je recommande Sen Biopest à tous les jardiniers qui veulent protéger leurs plantes naturellement.', rating: 4 },
-            ].map((t) => (
+            {testimonials.map((t) => (
               <StaggerItem key={t.name}>
-                <motion.div whileHover={{ y: -6 }} transition={{ type: 'spring', stiffness: 300 }}>
+                <div>
                   <Card className="h-full border-0 shadow-lg hover:shadow-xl transition-shadow">
                     <CardBody className="p-8">
                       <div className="flex gap-1 mb-4">
@@ -637,12 +563,12 @@ export default function HomePage() {
                         </div>
                         <div>
                           <p className="font-bold text-gray-900">{t.name}</p>
-                          <p className="text-xs text-gray-500">{t.role} — {t.location}</p>
+                          <p className="text-xs text-gray-500">{[t.role, t.location].filter(Boolean).join(' — ')}</p>
                         </div>
                       </div>
                     </CardBody>
                   </Card>
-                </motion.div>
+                </div>
               </StaggerItem>
             ))}
           </StaggerContainer>
@@ -654,7 +580,6 @@ export default function HomePage() {
         <div className="container-narrow">
           <FadeInUp>
             <div className="text-center mb-12">
-              <span className="inline-block text-primary-600 font-semibold text-sm uppercase tracking-wider mb-3">Besoin d&apos;aide ?</span>
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Questions fréquentes</h2>
             </div>
           </FadeInUp>
@@ -666,16 +591,15 @@ export default function HomePage() {
               { q: 'Livrez-vous dans tout le Sénégal ?', a: 'Oui, nous livrons dans les 14 régions du Sénégal. Les délais et conditions varient selon la zone. Contactez-nous pour plus de détails.' },
             ].map((faq) => (
               <StaggerItem key={faq.q}>
-                <motion.details
+                <details
                   className="bg-white rounded-xl border border-gray-200 group shadow-sm hover:shadow-md transition-shadow"
-                  whileHover={{ scale: 1.01 }}
                 >
                   <summary className="px-6 py-5 cursor-pointer font-semibold text-gray-900 flex items-center justify-between">
                     {faq.q}
                     <ChevronRight className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-90 shrink-0 ml-4" />
                   </summary>
                   <p className="px-6 pb-5 text-gray-600 leading-relaxed">{faq.a}</p>
-                </motion.details>
+                </details>
               </StaggerItem>
             ))}
           </StaggerContainer>
@@ -716,20 +640,16 @@ export default function HomePage() {
           </FadeInUp>
           <FadeInUp delay={0.4}>
             <div className="flex flex-wrap justify-center gap-4">
-              <MagneticWrapper>
                 <Link href="/contact">
-                  <Button variant="secondary" size="lg" className="text-base px-8 py-4 shadow-xl">
+                  <Button variant="secondary" size="lg" className="text-base px-8 py-4">
                     <Phone className="w-5 h-5" /> Demander un devis
                   </Button>
                 </Link>
-              </MagneticWrapper>
-              <MagneticWrapper>
                 <Link href="/produits">
                   <Button variant="outline" size="lg" className="text-base px-8 py-4 border-white/30 text-white hover:bg-white/10">
                     Voir nos produits <ArrowRight className="w-5 h-5" />
                   </Button>
                 </Link>
-              </MagneticWrapper>
             </div>
           </FadeInUp>
         </div>

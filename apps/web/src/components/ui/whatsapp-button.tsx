@@ -1,16 +1,24 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { MessageCircle } from 'lucide-react';
-import { getWhatsAppUrl, WHATSAPP_NUMBER } from '@/lib/utils';
+import { getWhatsAppUrl } from '@/lib/utils';
 import { api } from '@/lib/api';
+import { useSiteSettings } from '@/hooks/use-site-settings';
 
 export function WhatsAppButton() {
+  const { whatsappNumber: WHATSAPP_NUMBER } = useSiteSettings();
+  const pathname = usePathname();
+
   const handleClick = () => {
     api.post('/content/track-click', {
       ctaType: 'whatsapp',
       page: typeof window !== 'undefined' ? window.location.pathname : '/',
     }).catch(() => {});
   };
+
+  // Public call-to-action only: not shown in the back-office
+  if (pathname.startsWith('/admin')) return null;
 
   return (
     <a
@@ -23,7 +31,6 @@ export function WhatsAppButton() {
     >
       <MessageCircle className="w-6 h-6" />
       <span className="hidden sm:inline font-semibold">WhatsApp</span>
-      <span className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-20 pointer-events-none" />
     </a>
   );
 }

@@ -10,7 +10,8 @@ import {
   MessageCircle,
   Search,
 } from 'lucide-react';
-import { getWhatsAppUrl, WHATSAPP_NUMBER } from '@/lib/utils';
+import { getWhatsAppUrl } from '@/lib/utils';
+import { useSiteSettings } from '@/hooks/use-site-settings';
 
 interface FaqItem {
   id: string;
@@ -95,16 +96,18 @@ const staticFaqs: FaqItem[] = [
 ];
 
 export default function FaqPage() {
+  const { whatsappNumber: WHATSAPP_NUMBER } = useSiteSettings();
+
   const [faqs, setFaqs] = useState<FaqItem[]>(staticFaqs);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   useEffect(() => {
     api
-      .get<{ data: FaqItem[] }>('/content/faqs')
-      .then((res) => {
-        if (res.data && res.data.length > 0) {
-          setFaqs(res.data);
+      .get<(Omit<FaqItem, 'category'> & { category: string | null })[]>('/content/faqs')
+      .then((items) => {
+        if (items.length > 0) {
+          setFaqs(items.map((f) => ({ ...f, category: f.category || 'Général' })));
         }
       })
       .catch(() => {
@@ -137,10 +140,11 @@ export default function FaqPage() {
       <section className="relative bg-gradient-to-br from-primary-50 via-white to-green-50 overflow-hidden">
         <div className="container-wide py-16 sm:py-20 lg:py-24">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-primary-100 text-primary-700 text-sm font-medium px-3 py-1 rounded-full mb-6">
-              <HelpCircle className="w-4 h-4" />
-              FAQ
-            </div>
+            <nav aria-label="Fil d'Ariane" className="text-sm text-gray-500 mb-4">
+              <Link href="/" className="hover:text-gray-800">Accueil</Link>
+              <span className="mx-2" aria-hidden="true">/</span>
+              <span className="text-gray-700">FAQ</span>
+            </nav>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-6">
               Questions fréquentes
             </h1>
@@ -224,7 +228,7 @@ export default function FaqPage() {
           {filteredFaqs.length === 0 && (
             <div className="text-center py-12">
               <HelpCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">Aucune question ne correspond a votre recherche.</p>
+              <p className="text-gray-500">Aucune question ne correspond à votre recherche.</p>
             </div>
           )}
         </div>

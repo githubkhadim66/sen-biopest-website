@@ -2,50 +2,46 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { api } from '@/lib/api';
-import { cn, formatDate } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
+import { ROLE_LABELS } from '@/lib/admin';
+import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Loader2, X, UserCheck, UserX, Shield } from 'lucide-react';
+import { ErrorAlert, SuccessAlert } from '@/components/admin/alerts';
+import { Plus, Loader2, X, UserCheck, UserX, KeyRound } from 'lucide-react';
 
 interface User {
   id: string;
-  fullName: string;
   email: string;
+  firstName: string;
+  lastName: string;
   role: string;
-  active: boolean;
+  isActive: boolean;
   createdAt: string;
 }
 
-const ROLE_OPTIONS = [
-  { value: 'ADMIN', label: 'Administrateur' },
-  { value: 'COMMERCIAL', label: 'Commercial' },
-  { value: 'TECHNICIEN', label: 'Technicien' },
-];
+const ROLE_OPTIONS = Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label }));
+
+const EMPTY_FORM = { firstName: '', lastName: '', email: '', password: '', role: 'COMMERCIAL' };
 
 export default function UtilisateursAdminPage() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
-
-  const [form, setForm] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    role: 'COMMERCIAL',
-  });
+  const [form, setForm] = useState(EMPTY_FORM);
 
   const fetchUsers = useCallback(async () => {
     try {
-      setLoading(true);
       setError('');
-      const data = await api.get<{ users: User[] }>('/auth/users');
-      setUsers(data.users || []);
-    } catch (err: unknown) {
+      setUsers(await api.get<User[]>('/auth/users'));
+    } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement');
     } finally {
       setLoading(false);
@@ -56,46 +52,42 @@ export default function UtilisateursAdminPage() {
     fetchUsers();
   }, [fetchUsers]);
 
+  async function update(user: User, data: Partial<User> & { password?: string }, message: string) {
+    try {
+      setError('');
+      const updated = await api.put<User>(`/auth/users/${user.id}`, data);
+      setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+      setSuccess(message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour');
+    }
+  }
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
+    setError('');
     try {
-      await api.post('/auth/users', form);
+      const created = await api.post<User>('/auth/users', form);
+      setUsers((prev) => [created, ...prev]);
       setShowForm(false);
-      setForm({ fullName: '', email: '', password: '', role: 'COMMERCIAL' });
-      fetchUsers();
-    } catch (err: unknown) {
+      setForm(EMPTY_FORM);
+      setSuccess(`Compte créé pour ${created.firstName} ${created.lastName}.`);
+    } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la création');
     } finally {
       setSaving(false);
     }
   }
 
-  async function handleToggleActive(user: User) {
-    try {
-      await api.put(`/auth/users/${user.id}`, { active: !user.active });
-      fetchUsers();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour');
+  function handleResetPassword(user: User) {
+    const password = prompt(`Nouveau mot de passe pour ${user.firstName} ${user.lastName} (8 caractères minimum) :`);
+    if (password === null) return;
+    if (password.length < 8) {
+      setError('Le mot de passe doit contenir au moins 8 caractères.');
+      return;
     }
-  }
-
-  async function handleRoleChange(user: User, role: string) {
-    try {
-      await api.put(`/auth/users/${user.id}`, { role });
-      fetchUsers();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour');
-    }
-  }
-
-  function roleIcon(role: string) {
-    switch (role) {
-      case 'ADMIN':
-        return <Shield className="h-3.5 w-3.5 text-purple-600" />;
-      default:
-        return null;
-    }
+    update(user, { password }, 'Mot de passe modifié.');
   }
 
   return (
@@ -104,65 +96,42 @@ export default function UtilisateursAdminPage() {
         <h1 className="text-2xl font-bold text-gray-900">Utilisateurs</h1>
         <Button onClick={() => setShowForm(true)}>
           <Plus className="h-4 w-4" />
-          Nouvel utilisateur
+          Ajouter un utilisateur
         </Button>
       </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-          {error}
-        </div>
-      )}
+      <ErrorAlert message={error} onClose={() => setError('')} />
+      <SuccessAlert message={success} onDone={() => setSuccess('')} />
 
       {showForm && (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Créer un utilisateur</h2>
-              <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">
+              <h2 className="text-lg font-semibold">Nouvel utilisateur</h2>
+              <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600" aria-label="Fermer">
                 <X className="h-5 w-5" />
               </button>
             </div>
           </CardHeader>
           <CardBody>
-            <form onSubmit={handleCreate} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input
-                  label="Nom complet"
-                  required
-                  value={form.fullName}
-                  onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                />
-                <Input
-                  label="Email"
-                  type="email"
-                  required
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input
-                  label="Mot de passe"
-                  type="password"
-                  required
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                />
-                <Select
-                  label="Rôle"
-                  options={ROLE_OPTIONS}
-                  value={form.role}
-                  onChange={(e) => setForm({ ...form, role: e.target.value })}
-                />
-              </div>
-              <div className="flex justify-end gap-3">
-                <Button variant="ghost" type="button" onClick={() => setShowForm(false)}>
-                  Annuler
-                </Button>
-                <Button type="submit" loading={saving}>
-                  Créer
-                </Button>
+            <form onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input id="u-first" label="Prénom" required value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
+              <Input id="u-last" label="Nom" required value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
+              <Input id="u-email" label="Email" type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              <Input
+                id="u-pass"
+                label="Mot de passe provisoire"
+                type="password"
+                required
+                minLength={8}
+                autoComplete="new-password"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+              />
+              <Select id="u-role" label="Rôle" options={ROLE_OPTIONS} value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} />
+              <div className="sm:col-span-2 flex gap-3">
+                <Button type="submit" loading={saving}>Créer le compte</Button>
+                <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Annuler</Button>
               </div>
             </form>
           </CardBody>
@@ -175,8 +144,6 @@ export default function UtilisateursAdminPage() {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
             </div>
-          ) : users.length === 0 ? (
-            <div className="text-center py-12 text-gray-500 text-sm">Aucun utilisateur.</div>
           ) : (
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -184,49 +151,53 @@ export default function UtilisateursAdminPage() {
                   <th className="px-5 py-3">Nom</th>
                   <th className="px-5 py-3">Email</th>
                   <th className="px-5 py-3">Rôle</th>
-                  <th className="px-5 py-3 text-center">Statut</th>
+                  <th className="px-5 py-3">Statut</th>
                   <th className="px-5 py-3">Créé le</th>
                   <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {users.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
-                    <td className="px-5 py-3 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        {roleIcon(user.role)}
-                        <span className="font-medium text-gray-900">{user.fullName}</span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3 text-gray-600 whitespace-nowrap">{user.email}</td>
-                    <td className="px-5 py-3 whitespace-nowrap">
-                      <Select
-                        options={ROLE_OPTIONS}
-                        value={user.role}
-                        onChange={(e) => handleRoleChange(user, e.target.value)}
-                        className="w-40 text-xs"
-                      />
-                    </td>
-                    <td className="px-5 py-3 text-center whitespace-nowrap">
-                      <Badge className={user.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-                        {user.active ? 'Actif' : 'Inactif'}
-                      </Badge>
-                    </td>
-                    <td className="px-5 py-3 text-gray-500 whitespace-nowrap">{formatDate(user.createdAt)}</td>
-                    <td className="px-5 py-3 text-right whitespace-nowrap">
-                      <button
-                        onClick={() => handleToggleActive(user)}
-                        className={cn(
-                          'p-1.5 rounded transition-colors',
-                          user.active ? 'text-gray-400 hover:text-red-600' : 'text-gray-400 hover:text-green-600'
-                        )}
-                        title={user.active ? 'Désactiver' : 'Activer'}
-                      >
-                        {user.active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {users.map((u) => {
+                  const isSelf = u.id === currentUser?.id;
+                  return (
+                    <tr key={u.id} className={u.isActive ? '' : 'bg-gray-50 text-gray-400'}>
+                      <td className="px-5 py-3 font-medium text-gray-900 whitespace-nowrap">
+                        {u.firstName} {u.lastName}
+                        {isSelf && <span className="ml-2 text-xs text-gray-400">(vous)</span>}
+                      </td>
+                      <td className="px-5 py-3 text-gray-600 whitespace-nowrap">{u.email}</td>
+                      <td className="px-5 py-3">
+                        <Select
+                          options={ROLE_OPTIONS}
+                          value={u.role}
+                          disabled={isSelf}
+                          onChange={(e) => update(u, { role: e.target.value }, 'Rôle mis à jour.')}
+                          className="w-48 py-1.5"
+                        />
+                      </td>
+                      <td className="px-5 py-3">
+                        <Badge variant={u.isActive ? 'success' : 'default'}>{u.isActive ? 'Actif' : 'Désactivé'}</Badge>
+                      </td>
+                      <td className="px-5 py-3 text-gray-500 whitespace-nowrap">{formatDate(u.createdAt)}</td>
+                      <td className="px-5 py-3">
+                        <div className="flex justify-end gap-1">
+                          <button onClick={() => handleResetPassword(u)} className="p-2 text-gray-400 hover:text-primary-600" title="Changer le mot de passe">
+                            <KeyRound className="h-4 w-4" />
+                          </button>
+                          {!isSelf && (
+                            <button
+                              onClick={() => update(u, { isActive: !u.isActive }, u.isActive ? 'Compte désactivé.' : 'Compte réactivé.')}
+                              className={u.isActive ? 'p-2 text-gray-400 hover:text-red-600' : 'p-2 text-gray-400 hover:text-green-600'}
+                              title={u.isActive ? 'Désactiver' : 'Réactiver'}
+                            >
+                              {u.isActive ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}

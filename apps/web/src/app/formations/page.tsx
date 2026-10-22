@@ -49,12 +49,13 @@ export default function FormationsPage() {
       <section className="bg-gradient-to-br from-primary-50 via-white to-green-50">
         <div className="container-wide py-12 sm:py-16 lg:py-20">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-primary-100 text-primary-700 text-sm font-medium px-3 py-1 rounded-full mb-4">
-              <GraduationCap className="w-4 h-4" />
-              Formations
-            </div>
+            <nav aria-label="Fil d'Ariane" className="text-sm text-gray-500 mb-4">
+              <Link href="/" className="hover:text-gray-800">Accueil</Link>
+              <span className="mx-2" aria-hidden="true">/</span>
+              <span className="text-gray-700">Formations</span>
+            </nav>
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Renforcez vos competences en agriculture biologique
+              Renforcez vos compétences en agriculture biologique
             </h1>
             <p className="text-lg text-gray-600">
               Decouvrez nos formations pratiques sur l&apos;utilisation des biopesticides,
@@ -77,7 +78,7 @@ export default function FormationsPage() {
             <div className="text-center py-20">
               <p className="text-red-600 mb-4">{error}</p>
               <Button variant="outline" onClick={() => window.location.reload()}>
-                Reessayer
+                Réessayer
               </Button>
             </div>
           )}
@@ -89,7 +90,7 @@ export default function FormationsPage() {
                 Aucune formation disponible
               </h2>
               <p className="text-gray-600">
-                Revenez bientot pour decouvrir nos prochaines formations.
+                Revenez bientôt pour découvrir nos prochaines formations.
               </p>
             </div>
           )}

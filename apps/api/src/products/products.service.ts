@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   CreateProductDto,
@@ -8,6 +9,7 @@ import {
   CreateCropDto,
   CreatePestDto,
 } from './products.dto';
+import { paginate } from '../common/dto/pagination.dto';
 import slugify from 'slugify';
 
 const productInclude = {
@@ -17,7 +19,17 @@ const productInclude = {
   pests: { include: { pest: true } },
   tags: { include: { tag: true } },
   faq: { orderBy: { sortOrder: 'asc' as const } },
-};
+} satisfies Prisma.ProductInclude;
+
+// Lighter payload for listing cards (no FAQ / tags)
+const productListInclude = {
+  category: true,
+  images: { orderBy: { sortOrder: 'asc' as const } },
+  crops: { include: { crop: true } },
+  pests: { include: { pest: true } },
+} satisfies Prisma.ProductInclude;
+
+const toSlug = (value: string) => slugify(value, { lower: true, strict: true });
 
 @Injectable()
 export class ProductsService {
@@ -27,7 +39,7 @@ export class ProductsService {
     const { search, category, crop, pest, tag, availability, featured, page = 1, limit = 20 } = filters;
     const skip = (page - 1) * limit;
 
-    const where: Record<string, unknown> = { isPublished: true };
+    const where: Prisma.ProductWhereInput = { isPublished: true };
 
     if (search) {
       where.OR = [
@@ -45,7 +57,7 @@ export class ProductsService {
     const [data, total] = await Promise.all([
       this.prisma.product.findMany({
         where,
-        include: productInclude,
+        include: productListInclude,
         skip,
         take: limit,
         orderBy: [{ isFeatured: 'desc' }, { sortOrder: 'asc' }, { createdAt: 'desc' }],
@@ -53,23 +65,15 @@ export class ProductsService {
       this.prisma.product.count({ where }),
     ]);
 
-    return {
-      data: data.map(this.formatProduct),
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
+    return paginate(data.map((p) => this.formatProduct(p)), total, page, limit);
   }
 
   async findAllAdmin(filters: ProductFilterDto) {
     const { search, page = 1, limit = 20 } = filters;
     const skip = (page - 1) * limit;
-    const where: Record<string, unknown> = {};
+    const where: Prisma.ProductWhereInput = {};
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-      ];
+      where.OR = [{ name: { contains: search, mode: 'insensitive' } }];
     }
 
     const [data, total] = await Promise.all([
@@ -83,18 +87,12 @@ export class ProductsService {
       this.prisma.product.count({ where }),
     ]);
 
-    return {
-      data: data.map(this.formatProduct),
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
+    return paginate(data.map((p) => this.formatProduct(p)), total, page, limit);
   }
 
   async findBySlug(slug: string) {
-    const product = await this.prisma.product.findUnique({
-      where: { slug },
+    const product = await this.prisma.product.findFirst({
+      where: { slug, isPublished: true },
       include: productInclude,
     });
     if (!product) throw new NotFoundException('Produit introuvable');
@@ -104,17 +102,17 @@ export class ProductsService {
         isPublished: true,
         id: { not: product.id },
         OR: [
-          { categoryId: product.categoryId },
+          ...(product.categoryId ? [{ categoryId: product.categoryId }] : []),
           { crops: { some: { cropId: { in: product.crops.map((c) => c.cropId) } } } },
         ],
       },
-      include: productInclude,
+      include: productListInclude,
       take: 4,
     });
 
     return {
       ...this.formatProduct(product),
-      relatedProducts: relatedProducts.map(this.formatProduct),
+      relatedProducts: relatedProducts.map((p) => this.formatProduct(p)),
     };
   }
 
@@ -128,7 +126,7 @@ export class ProductsService {
   }
 
   async create(dto: CreateProductDto) {
-    const slug = slugify(dto.name, { lower: true, strict: true });
+    const slug = await this.uniqueSlug(dto.name);
 
     const product = await this.prisma.product.create({
       data: {
@@ -142,30 +140,16 @@ export class ProductsService {
         applicationMethod: dto.applicationMethod,
         precautions: dto.precautions,
         packaging: dto.packaging,
-        availability: dto.availability || 'Disponible',
+        availability: dto.availability || 'EN_STOCK',
         isFeatured: dto.isFeatured || false,
         isPublished: dto.isPublished ?? true,
         categoryId: dto.categoryId,
         metaTitle: dto.metaTitle,
         metaDescription: dto.metaDescription,
-        crops: dto.cropIds
-          ? { create: dto.cropIds.map((cropId) => ({ cropId })) }
-          : undefined,
-        pests: dto.pestIds
-          ? { create: dto.pestIds.map((pestId) => ({ pestId })) }
-          : undefined,
-        tags: dto.tagIds
-          ? { create: dto.tagIds.map((tagId) => ({ tagId })) }
-          : undefined,
-        images: dto.imageUrls
-          ? {
-              create: dto.imageUrls.map((url, index) => ({
-                url,
-                isPrimary: index === 0,
-                sortOrder: index,
-              })),
-            }
-          : undefined,
+        crops: dto.cropIds ? { create: dto.cropIds.map((cropId) => ({ cropId })) } : undefined,
+        pests: dto.pestIds ? { create: dto.pestIds.map((pestId) => ({ pestId })) } : undefined,
+        tags: dto.tagIds ? { create: dto.tagIds.map((tagId) => ({ tagId })) } : undefined,
+        images: dto.imageUrls ? { create: this.imageRows(dto.imageUrls) } : undefined,
       },
       include: productInclude,
     });
@@ -174,60 +158,43 @@ export class ProductsService {
   }
 
   async update(id: string, dto: UpdateProductDto) {
-    await this.findById(id);
+    const existing = await this.findById(id);
+    const slug =
+      dto.name && dto.name !== existing.name ? await this.uniqueSlug(dto.name, id) : undefined;
 
-    if (dto.cropIds) {
-      await this.prisma.cropOnProduct.deleteMany({ where: { productId: id } });
-    }
-    if (dto.pestIds) {
-      await this.prisma.pestOnProduct.deleteMany({ where: { productId: id } });
-    }
-    if (dto.tagIds) {
-      await this.prisma.tagOnProduct.deleteMany({ where: { productId: id } });
-    }
-    if (dto.imageUrls) {
-      await this.prisma.productImage.deleteMany({ where: { productId: id } });
-    }
+    // Relations are replaced as a whole: run deletes + update atomically
+    const product = await this.prisma.$transaction(async (tx) => {
+      if (dto.cropIds) await tx.cropOnProduct.deleteMany({ where: { productId: id } });
+      if (dto.pestIds) await tx.pestOnProduct.deleteMany({ where: { productId: id } });
+      if (dto.tagIds) await tx.tagOnProduct.deleteMany({ where: { productId: id } });
+      if (dto.imageUrls) await tx.productImage.deleteMany({ where: { productId: id } });
 
-    const product = await this.prisma.product.update({
-      where: { id },
-      data: {
-        name: dto.name,
-        slug: dto.name ? slugify(dto.name, { lower: true, strict: true }) : undefined,
-        shortDescription: dto.shortDescription,
-        description: dto.description,
-        benefits: dto.benefits,
-        activeIngredients: dto.activeIngredients,
-        dosage: dto.dosage,
-        applicationMethod: dto.applicationMethod,
-        precautions: dto.precautions,
-        packaging: dto.packaging,
-        availability: dto.availability,
-        isFeatured: dto.isFeatured,
-        isPublished: dto.isPublished,
-        categoryId: dto.categoryId,
-        metaTitle: dto.metaTitle,
-        metaDescription: dto.metaDescription,
-        crops: dto.cropIds
-          ? { create: dto.cropIds.map((cropId) => ({ cropId })) }
-          : undefined,
-        pests: dto.pestIds
-          ? { create: dto.pestIds.map((pestId) => ({ pestId })) }
-          : undefined,
-        tags: dto.tagIds
-          ? { create: dto.tagIds.map((tagId) => ({ tagId })) }
-          : undefined,
-        images: dto.imageUrls
-          ? {
-              create: dto.imageUrls.map((url, index) => ({
-                url,
-                isPrimary: index === 0,
-                sortOrder: index,
-              })),
-            }
-          : undefined,
-      },
-      include: productInclude,
+      return tx.product.update({
+        where: { id },
+        data: {
+          name: dto.name,
+          slug,
+          shortDescription: dto.shortDescription,
+          description: dto.description,
+          benefits: dto.benefits,
+          activeIngredients: dto.activeIngredients,
+          dosage: dto.dosage,
+          applicationMethod: dto.applicationMethod,
+          precautions: dto.precautions,
+          packaging: dto.packaging,
+          availability: dto.availability,
+          isFeatured: dto.isFeatured,
+          isPublished: dto.isPublished,
+          categoryId: dto.categoryId,
+          metaTitle: dto.metaTitle,
+          metaDescription: dto.metaDescription,
+          crops: dto.cropIds ? { create: dto.cropIds.map((cropId) => ({ cropId })) } : undefined,
+          pests: dto.pestIds ? { create: dto.pestIds.map((pestId) => ({ pestId })) } : undefined,
+          tags: dto.tagIds ? { create: dto.tagIds.map((tagId) => ({ tagId })) } : undefined,
+          images: dto.imageUrls ? { create: this.imageRows(dto.imageUrls) } : undefined,
+        },
+        include: productInclude,
+      });
     });
 
     return this.formatProduct(product);
@@ -243,14 +210,13 @@ export class ProductsService {
   async getCategories() {
     return this.prisma.productCategory.findMany({
       orderBy: { sortOrder: 'asc' },
-      include: { _count: { select: { products: true } } },
+      include: { _count: { select: { products: { where: { isPublished: true } } } } },
     });
   }
 
   async createCategory(dto: CreateCategoryDto) {
-    const slug = slugify(dto.name, { lower: true, strict: true });
     return this.prisma.productCategory.create({
-      data: { name: dto.name, slug, description: dto.description },
+      data: { name: dto.name, slug: toSlug(dto.name), description: dto.description },
     });
   }
 
@@ -260,8 +226,7 @@ export class ProductsService {
   }
 
   async createCrop(dto: CreateCropDto) {
-    const slug = slugify(dto.name, { lower: true, strict: true });
-    return this.prisma.crop.create({ data: { name: dto.name, slug } });
+    return this.prisma.crop.create({ data: { name: dto.name, slug: toSlug(dto.name) } });
   }
 
   // Pests
@@ -270,8 +235,25 @@ export class ProductsService {
   }
 
   async createPest(dto: CreatePestDto) {
-    const slug = slugify(dto.name, { lower: true, strict: true });
-    return this.prisma.pest.create({ data: { name: dto.name, slug } });
+    return this.prisma.pest.create({ data: { name: dto.name, slug: toSlug(dto.name) } });
+  }
+
+  private imageRows(urls: string[]) {
+    return urls.map((url, index) => ({ url, isPrimary: index === 0, sortOrder: index }));
+  }
+
+  /** "AromaProtect" -> "aromaprotect", then "aromaprotect-2" if already taken */
+  private async uniqueSlug(name: string, excludeId?: string) {
+    const base = toSlug(name) || 'produit';
+    const taken = await this.prisma.product.findMany({
+      where: { slug: { startsWith: base }, ...(excludeId ? { id: { not: excludeId } } : {}) },
+      select: { slug: true },
+    });
+    const slugs = new Set(taken.map((p) => p.slug));
+    if (!slugs.has(base)) return base;
+    let n = 2;
+    while (slugs.has(`${base}-${n}`)) n++;
+    return `${base}-${n}`;
   }
 
   private formatProduct(product: any) {
@@ -290,13 +272,16 @@ export class ProductsService {
       availability: product.availability,
       isFeatured: product.isFeatured,
       isPublished: product.isPublished,
-      primaryImage: product.images?.find((i: any) => i.isPrimary)?.url || product.images?.[0]?.url || null,
+      primaryImage:
+        product.images?.find((i: any) => i.isPrimary)?.url || product.images?.[0]?.url || null,
       images: product.images || [],
       category: product.category
         ? { id: product.category.id, name: product.category.name, slug: product.category.slug }
         : null,
       crops: product.crops?.map((c: any) => c.crop.name) || [],
+      cropIds: product.crops?.map((c: any) => c.cropId) || [],
       pests: product.pests?.map((p: any) => p.pest.name) || [],
+      pestIds: product.pests?.map((p: any) => p.pestId) || [],
       tags: product.tags?.map((t: any) => t.tag.name) || [],
       faq: product.faq || [],
       metaTitle: product.metaTitle,

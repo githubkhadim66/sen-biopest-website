@@ -50,12 +50,12 @@ const actorTypeLabels: Record<string, string> = {
 };
 
 const registrationSchema = z.object({
-  firstName: z.string().min(2, 'Le prenom est requis'),
+  firstName: z.string().min(2, 'Le prénom est requis'),
   lastName: z.string().min(2, 'Le nom est requis'),
-  phone: z.string().min(9, 'Numero de telephone invalide'),
+  phone: z.string().min(9, 'Numéro de téléphone invalide'),
   email: z.string().email('Email invalide').optional().or(z.literal('')),
   organization: z.string().optional(),
-  actorType: z.nativeEnum(ActorType, { errorMap: () => ({ message: 'Selectionnez un type' }) }),
+  actorType: z.nativeEnum(ActorType, { errorMap: () => ({ message: 'Sélectionnez un type' }) }),
   locality: z.string().optional(),
   region: z.string().optional(),
   motivation: z.string().optional(),
@@ -86,8 +86,8 @@ export default function TrainingDetailPage() {
   useEffect(() => {
     if (!slug) return;
     api
-      .get<{ data: TrainingDetail }>(`/trainings/${slug}`)
-      .then((res) => setTraining(res.data))
+      .get<TrainingDetail>(`/trainings/${slug}`)
+      .then(setTraining)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [slug]);
@@ -127,6 +127,10 @@ export default function TrainingDetailPage() {
   }
 
   if (!training) return null;
+
+  const isFull = !!training.maxParticipants && training.registrationCount >= training.maxParticipants;
+  const isPast = !!training.date && new Date(training.date) < new Date();
+  const registrationClosed = !submitted && (isFull || isPast);
 
   return (
     <>
@@ -210,7 +214,7 @@ export default function TrainingDetailPage() {
                     <div className="flex items-center gap-3 text-sm text-gray-600">
                       <Clock className="w-5 h-5 text-primary-600 shrink-0" />
                       <div>
-                        <p className="font-medium text-gray-900">Duree</p>
+                        <p className="font-medium text-gray-900">Durée</p>
                         <p>{training.duration}</p>
                       </div>
                     </div>
@@ -262,6 +266,22 @@ export default function TrainingDetailPage() {
       </section>
 
       {/* Registration Form */}
+      {registrationClosed && (
+          <section id="inscription" className="section-padding bg-gray-50">
+            <div className="container-narrow text-center">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                {isPast ? 'Cette session est terminée' : 'Cette formation est complète'}
+              </h2>
+              <p className="text-gray-600 mb-6">
+                Contactez-nous pour être informé(e) des prochaines sessions.
+              </p>
+              <Link href="/contact">
+                <Button>Nous contacter</Button>
+              </Link>
+            </div>
+          </section>
+      )}
+      {!registrationClosed && (
       <section id="inscription" className="section-padding bg-gray-50">
         <div className="container-narrow">
           {submitted ? (
@@ -269,7 +289,7 @@ export default function TrainingDetailPage() {
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Inscription envoyee !</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Inscription envoyée !</h2>
               <p className="text-gray-600 mb-6">
                 Votre inscription a la formation &laquo; {training.title} &raquo; a bien ete enregistree.
                 Nous vous contacterons prochainement pour confirmer votre participation.
@@ -282,7 +302,7 @@ export default function TrainingDetailPage() {
             <>
               <div className="text-center mb-8">
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                  Inscription a la formation
+                  Inscription à la formation
                 </h2>
                 <p className="text-gray-600">
                   Remplissez le formulaire ci-dessous pour vous inscrire a cette formation.
@@ -302,7 +322,7 @@ export default function TrainingDetailPage() {
                       <Input
                         label="Prenom"
                         id="firstName"
-                        placeholder="Votre prenom"
+                        placeholder="Votre prénom"
                         required
                         error={errors.firstName?.message}
                         {...register('firstName')}
@@ -349,7 +369,7 @@ export default function TrainingDetailPage() {
                       label="Type d'acteur"
                       id="actorType"
                       required
-                      placeholder="Selectionnez votre profil"
+                      placeholder="Sélectionnez votre profil"
                       options={Object.entries(actorTypeLabels).map(([value, label]) => ({
                         value,
                         label,
@@ -369,7 +389,7 @@ export default function TrainingDetailPage() {
                       <Select
                         label="Region"
                         id="region"
-                        placeholder="Selectionnez une region"
+                        placeholder="Sélectionnez une région"
                         options={SENEGAL_REGIONS.map((r) => ({ value: r, label: r }))}
                         error={errors.region?.message}
                         {...register('region')}
@@ -410,6 +430,7 @@ export default function TrainingDetailPage() {
           )}
         </div>
       </section>
+      )}
     </>
   );
 }

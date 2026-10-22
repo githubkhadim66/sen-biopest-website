@@ -30,6 +30,7 @@ export class DashboardService {
       ordersThisMonth,
       ordersNew,
       recentOrders,
+      contactUnread,
     ] = await Promise.all([
       this.prisma.commercialRequest.count(),
       this.prisma.commercialRequest.count({ where: { createdAt: { gte: startOfMonth } } }),
@@ -41,8 +42,8 @@ export class DashboardService {
       this.prisma.trainingRegistration.count({ where: { createdAt: { gte: startOfMonth } } }),
       this.prisma.partnershipRequest.count(),
       this.prisma.partnershipRequest.count({ where: { createdAt: { gte: startOfMonth } } }),
-      this.prisma.ctaClick.count({ where: { ctaType: 'whatsapp' } }),
-      this.prisma.ctaClick.count({ where: { ctaType: 'devis' } }),
+      this.prisma.ctaClick.count({ where: { ctaType: { startsWith: 'whatsapp' } } }),
+      this.prisma.ctaClick.count({ where: { ctaType: { contains: 'devis' } } }),
       this.prisma.ctaClick.count(),
       this.prisma.commercialRequest.findMany({
         take: 5,
@@ -68,6 +69,7 @@ export class DashboardService {
           createdAt: true,
         },
       }),
+      this.prisma.contactRequest.count({ where: { isRead: false } }),
     ]);
 
     const commercialStatusMap: Record<string, number> = {};
@@ -96,6 +98,7 @@ export class DashboardService {
         total: partnershipTotal,
         thisMonth: partnershipThisMonth,
       },
+      contactMessages: { unread: contactUnread },
       ctaClicks: {
         whatsapp: whatsappClicks,
         devis: devisClicks,

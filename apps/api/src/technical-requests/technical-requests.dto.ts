@@ -1,5 +1,6 @@
-import { IsString, IsOptional, IsBoolean, IsEnum, IsEmail } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsEnum, IsEmail, IsArray, ArrayMaxSize, Matches } from 'class-validator';
 import { TechnicalRequestStatus, ActorType } from '@prisma/client';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 export class CreateTechnicalRequestDto {
   @IsString()
@@ -46,6 +47,13 @@ export class CreateTechnicalRequestDto {
 
   @IsBoolean()
   consent: boolean;
+
+  /** URLs returned by POST /uploads/single */
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(5)
+  @Matches(/^\/uploads\/[\w.-]+$/, { each: true })
+  photos?: string[];
 }
 
 export class UpdateTechnicalRequestStatusDto {
@@ -60,4 +68,14 @@ export class UpdateTechnicalRequestStatusDto {
 export class AddTechnicalNoteDto {
   @IsString()
   content: string;
+}
+
+export class TechnicalRequestQueryDto extends PaginationDto {
+  @IsOptional()
+  @IsEnum(TechnicalRequestStatus)
+  status?: TechnicalRequestStatus;
+
+  @IsOptional()
+  @IsString()
+  region?: string;
 }

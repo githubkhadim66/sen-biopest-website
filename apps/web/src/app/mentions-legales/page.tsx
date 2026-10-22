@@ -14,7 +14,7 @@ export default function MentionsLegalesPage() {
 
           <div className="prose prose-gray max-w-none space-y-8">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">1. Editeur du site</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-3">1. Éditeur du site</h2>
               <p className="text-gray-600 leading-relaxed">
                 Le site <strong>senbiopest.sn</strong> est édité par :<br />
                 <strong>Sen Biopest</strong><br />

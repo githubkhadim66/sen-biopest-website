@@ -16,6 +16,7 @@ import {
   CreateRegistrationDto,
   UpdateRegistrationStatusDto,
 } from './trainings.dto';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -37,6 +38,7 @@ export class TrainingsController {
   }
 
   @Post('register')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   register(@Body() dto: CreateRegistrationDto) {
     return this.service.register(dto);
   }

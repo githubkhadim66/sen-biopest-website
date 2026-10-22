@@ -1,24 +1,30 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { Fragment, useEffect, useState, useCallback } from 'react';
 import { api } from '@/lib/api';
-import { cn, formatDate, statusLabel, statusColor } from '@/lib/utils';
+import { cn, formatDate, statusLabel, statusColor, getWhatsAppUrl } from '@/lib/utils';
+import { PARTNER_TYPE_LABELS, exportCSV, useDebouncedValue, type Note, type Paginated } from '@/lib/admin';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
-import { Card, CardBody, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Search, Download, ChevronDown, ChevronUp, Loader2, MessageSquare } from 'lucide-react';
+import { Card, CardHeader } from '@/components/ui/card';
+import { NotesPanel } from '@/components/admin/notes-panel';
+import { ErrorAlert } from '@/components/admin/alerts';
+import { Search, Download, ChevronDown, ChevronUp, Loader2, MessageCircle, Globe } from 'lucide-react';
 
 interface PartnershipRequest {
   id: string;
+  partnerType: string;
   organizationName: string;
   contactName: string;
-  email: string;
+  email: string | null;
   phone: string;
-  partnerType: string;
+  website: string | null;
+  locality: string | null;
+  region: string | null;
+  proposal: string;
+  objectives: string | null;
   status: string;
-  message: string;
-  notes: string[];
+  notes: Note[];
   createdAt: string;
 }
 
@@ -31,100 +37,87 @@ const STATUS_OPTIONS = [
   { value: 'REFUSE', label: 'Refusé' },
 ];
 
-function exportCSV(data: PartnershipRequest[], filename: string) {
-  const headers = ['Organisation', 'Contact', 'Email', 'Téléphone', 'Type partenaire', 'Statut', 'Date'];
-  const rows = data.map((r) => [
-    r.organizationName,
-    r.contactName,
-    r.email,
-    r.phone,
-    r.partnerType,
-    statusLabel(r.status),
-    formatDate(r.createdAt),
-  ]);
-  const csv = [headers, ...rows].map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${filename}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
 export default function PartenariatsAdminPage() {
   const [requests, setRequests] = useState<PartnershipRequest[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [noteText, setNoteText] = useState('');
-  const [savingNote, setSavingNote] = useState(false);
+  const debouncedSearch = useDebouncedValue(search);
 
   const fetchRequests = useCallback(async () => {
     try {
-      setLoading(true);
       setError('');
-      const data = await api.get<{ requests: PartnershipRequest[] }>('/partnerships');
-      setRequests(data.requests || []);
-    } catch (err: unknown) {
+      const params = new URLSearchParams({ limit: '100' });
+      if (debouncedSearch) params.set('search', debouncedSearch);
+      if (statusFilter) params.set('status', statusFilter);
+      const res = await api.get<Paginated<PartnershipRequest>>(`/partnerships?${params}`);
+      setRequests(res.data);
+      setTotal(res.total);
+    } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [debouncedSearch, statusFilter]);
 
   useEffect(() => {
     fetchRequests();
   }, [fetchRequests]);
 
-  const filtered = requests.filter((r) => {
-    const matchesSearch =
-      r.organizationName.toLowerCase().includes(search.toLowerCase()) ||
-      r.contactName.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = !statusFilter || r.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  async function handleStatusChange(id: string, newStatus: string) {
+  async function handleStatusChange(id: string, status: string) {
     try {
-      await api.put(`/partnerships/${id}`, { status: newStatus });
-      fetchRequests();
-    } catch (err: unknown) {
+      await api.put(`/partnerships/${id}/status`, { status });
+      setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+    } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour');
     }
   }
 
-  async function handleAddNote(id: string) {
-    if (!noteText.trim()) return;
-    setSavingNote(true);
+  async function handleAddNote(id: string, content: string) {
     try {
-      await api.post(`/partnerships/${id}/notes`, { content: noteText });
-      setNoteText('');
-      fetchRequests();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erreur');
-    } finally {
-      setSavingNote(false);
+      const note = await api.post<Note>(`/partnerships/${id}/notes`, { content });
+      setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, notes: [note, ...r.notes] } : r)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur lors de l'ajout de la note");
     }
+  }
+
+  function handleExport() {
+    exportCSV(
+      ['Organisation', 'Contact', 'Téléphone', 'Email', 'Type', 'Site web', 'Région', 'Proposition', 'Statut', 'Date'],
+      requests.map((r) => [
+        r.organizationName,
+        r.contactName,
+        r.phone,
+        r.email,
+        PARTNER_TYPE_LABELS[r.partnerType] || r.partnerType,
+        r.website,
+        r.region,
+        r.proposal,
+        statusLabel(r.status),
+        formatDate(r.createdAt),
+      ]),
+      'partenariats',
+    );
   }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">Partenariats</h1>
-        <Button variant="outline" onClick={() => exportCSV(filtered, 'partenariats')}>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Partenariats</h1>
+          <p className="text-sm text-gray-500">{total} demande{total > 1 ? 's' : ''}</p>
+        </div>
+        <Button variant="outline" onClick={handleExport} disabled={requests.length === 0}>
           <Download className="h-4 w-4" />
           Exporter CSV
         </Button>
       </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-          {error}
-        </div>
-      )}
+      <ErrorAlert message={error} onClose={() => setError('')} />
 
       <Card>
         <CardHeader>
@@ -132,8 +125,8 @@ export default function PartenariatsAdminPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
-                type="text"
-                placeholder="Rechercher par organisation, contact..."
+                type="search"
+                placeholder="Rechercher par organisation ou contact..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
@@ -152,9 +145,9 @@ export default function PartenariatsAdminPage() {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
             </div>
-          ) : filtered.length === 0 ? (
+          ) : requests.length === 0 ? (
             <div className="text-center py-12 text-gray-500 text-sm">
-              {search || statusFilter ? 'Aucune demande trouvée.' : 'Aucune demande de partenariat.'}
+              {search || statusFilter ? 'Aucune demande pour ces critères.' : 'Aucune demande de partenariat.'}
             </div>
           ) : (
             <table className="w-full text-sm">
@@ -162,17 +155,16 @@ export default function PartenariatsAdminPage() {
                 <tr>
                   <th className="px-5 py-3 w-8"></th>
                   <th className="px-5 py-3">Organisation</th>
+                  <th className="px-5 py-3">Contact</th>
                   <th className="px-5 py-3">Type</th>
                   <th className="px-5 py-3">Statut</th>
-                  <th className="px-5 py-3">Contact</th>
                   <th className="px-5 py-3">Date</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filtered.map((req) => (
-                  <>
+                {requests.map((req) => (
+                  <Fragment key={req.id}>
                     <tr
-                      key={req.id}
                       className="hover:bg-gray-50 cursor-pointer"
                       onClick={() => setExpandedId(expandedId === req.id ? null : req.id)}
                     >
@@ -184,68 +176,78 @@ export default function PartenariatsAdminPage() {
                         )}
                       </td>
                       <td className="px-5 py-3 font-medium text-gray-900 whitespace-nowrap">{req.organizationName}</td>
-                      <td className="px-5 py-3 text-gray-600 whitespace-nowrap">{req.partnerType}</td>
+                      <td className="px-5 py-3 text-gray-600 whitespace-nowrap">{req.contactName}</td>
+                      <td className="px-5 py-3 text-gray-600 whitespace-nowrap">
+                        {PARTNER_TYPE_LABELS[req.partnerType] || req.partnerType}
+                      </td>
                       <td className="px-5 py-3 whitespace-nowrap">
                         <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium', statusColor(req.status))}>
                           {statusLabel(req.status)}
                         </span>
                       </td>
-                      <td className="px-5 py-3 text-gray-600 whitespace-nowrap">{req.contactName}</td>
                       <td className="px-5 py-3 text-gray-500 whitespace-nowrap">{formatDate(req.createdAt)}</td>
                     </tr>
                     {expandedId === req.id && (
-                      <tr key={`${req.id}-detail`}>
+                      <tr>
                         <td colSpan={6} className="px-5 py-4 bg-gray-50">
-                          <div className="space-y-4 max-w-2xl">
-                            <div>
-                              <p className="text-xs font-medium text-gray-500 uppercase mb-1">Contact</p>
-                              <p className="text-sm">{req.contactName} &middot; {req.email} &middot; {req.phone}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs font-medium text-gray-500 uppercase mb-1">Message</p>
-                              <p className="text-sm text-gray-700 whitespace-pre-wrap">{req.message || 'Aucun message'}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs font-medium text-gray-500 uppercase mb-1">Changer le statut</p>
-                              <Select
-                                options={STATUS_OPTIONS.filter((o) => o.value !== '')}
-                                value={req.status}
-                                onChange={(e) => handleStatusChange(req.id, e.target.value)}
-                                className="w-48"
-                              />
-                            </div>
-                            <div>
-                              <p className="text-xs font-medium text-gray-500 uppercase mb-1">
-                                Notes ({req.notes?.length || 0})
-                              </p>
-                              {req.notes && req.notes.length > 0 && (
-                                <div className="space-y-2 mb-3">
-                                  {req.notes.map((note, i) => (
-                                    <div key={i} className="bg-white border border-gray-200 rounded p-2 text-sm">
-                                      {typeof note === 'string' ? note : JSON.stringify(note)}
-                                    </div>
-                                  ))}
+                          <div className="grid gap-4 lg:grid-cols-2 max-w-5xl">
+                            <div className="space-y-4">
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase mb-1">Contact</p>
+                                <p className="text-sm">
+                                  {req.contactName} · {req.phone} · {req.email || "Pas d'email"}
+                                  {req.region ? ` · ${req.region}` : ''}
+                                  {req.locality ? ` (${req.locality})` : ''}
+                                </p>
+                                <div className="flex flex-wrap gap-4 mt-1">
+                                  <a
+                                    href={getWhatsAppUrl(req.phone, `Bonjour ${req.contactName}, Sen Biopest revient vers vous au sujet de votre proposition de partenariat.`)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-sm text-green-700 hover:underline"
+                                  >
+                                    <MessageCircle className="h-4 w-4" /> WhatsApp
+                                  </a>
+                                  {req.website && (
+                                    <a
+                                      href={req.website.startsWith('http') ? req.website : `https://${req.website}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 text-sm text-primary-700 hover:underline"
+                                    >
+                                      <Globe className="h-4 w-4" /> Site web
+                                    </a>
+                                  )}
+                                </div>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase mb-1">Proposition</p>
+                                <p className="text-sm text-gray-700 whitespace-pre-wrap">{req.proposal}</p>
+                              </div>
+                              {req.objectives && (
+                                <div>
+                                  <p className="text-xs font-medium text-gray-500 uppercase mb-1">Objectifs</p>
+                                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{req.objectives}</p>
                                 </div>
                               )}
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  placeholder="Ajouter une note..."
-                                  value={expandedId === req.id ? noteText : ''}
-                                  onChange={(e) => setNoteText(e.target.value)}
-                                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
-                                  onKeyDown={(e) => e.key === 'Enter' && handleAddNote(req.id)}
+                            </div>
+                            <div className="space-y-4">
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase mb-1">Statut</p>
+                                <Select
+                                  options={STATUS_OPTIONS.filter((o) => o.value !== '')}
+                                  value={req.status}
+                                  onChange={(e) => handleStatusChange(req.id, e.target.value)}
+                                  className="w-48"
                                 />
-                                <Button size="sm" onClick={() => handleAddNote(req.id)} loading={savingNote}>
-                                  <MessageSquare className="h-3 w-3" />
-                                </Button>
                               </div>
+                              <NotesPanel notes={req.notes} onAdd={(content) => handleAddNote(req.id, content)} />
                             </div>
                           </div>
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>

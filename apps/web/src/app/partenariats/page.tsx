@@ -36,13 +36,13 @@ const partnerTypeConfig: Record<
     label: 'Fournisseur',
     icon: Truck,
     description:
-      'Fournissez des matieres premieres naturelles ou des equipements pour la production de biopesticides.',
+      'Fournissez des matières premières naturelles ou des équipements pour la production de biopesticides.',
   },
   DISTRIBUTEUR: {
     label: 'Distributeur',
     icon: Store,
     description:
-      'Distribuez nos produits biopesticides dans votre region ou reseau de vente.',
+      'Distribuez nos produits biopesticides dans votre région ou réseau de vente.',
   },
   INSTITUTION: {
     label: 'Institution',
@@ -54,7 +54,7 @@ const partnerTypeConfig: Record<
     label: 'Laboratoire',
     icon: FlaskConical,
     description:
-      'Participez au developpement et a la validation de nouvelles formulations biologiques.',
+      'Participez au développement et à la validation de nouvelles formulations biologiques.',
   },
   FINANCEUR: {
     label: 'Financeur',
@@ -66,28 +66,28 @@ const partnerTypeConfig: Record<
     label: 'Programme',
     icon: FolderKanban,
     description:
-      'Integrez nos solutions dans vos programmes de developpement agricole ou de securite alimentaire.',
+      'Intégrez nos solutions dans vos programmes de développement agricole ou de sécurité alimentaire.',
   },
   ACHETEUR: {
     label: 'Acheteur',
     icon: ShoppingCart,
     description:
-      'Achetez en gros nos biopesticides pour vos exploitations, cooperatives ou projets.',
+      'Achetez en gros nos biopesticides pour vos exploitations, coopératives ou projets.',
   },
 };
 
 const partnershipSchema = z.object({
   partnerType: z.nativeEnum(PartnerType, {
-    errorMap: () => ({ message: 'Selectionnez un type de partenariat' }),
+    errorMap: () => ({ message: 'Sélectionnez un type de partenariat' }),
   }),
   organizationName: z.string().min(2, 'Le nom de l\'organisation est requis'),
   contactName: z.string().min(2, 'Le nom du contact est requis'),
-  phone: z.string().min(9, 'Numero de telephone invalide'),
+  phone: z.string().min(9, 'Numéro de téléphone invalide'),
   email: z.string().email('Email invalide').optional().or(z.literal('')),
   website: z.string().url('URL invalide').optional().or(z.literal('')),
   locality: z.string().optional(),
   region: z.string().optional(),
-  proposal: z.string().min(20, 'Decrivez votre proposition (min. 20 caracteres)'),
+  proposal: z.string().min(20, 'Décrivez votre proposition (min. 20 caracteres)'),
   objectives: z.string().optional(),
   consent: z.literal(true, {
     errorMap: () => ({ message: 'Vous devez accepter les conditions' }),
@@ -124,12 +124,13 @@ export default function PartenariatsPage() {
       <section className="bg-gradient-to-br from-primary-50 via-white to-green-50">
         <div className="container-wide py-12 sm:py-16 lg:py-20">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-primary-100 text-primary-700 text-sm font-medium px-3 py-1 rounded-full mb-4">
-              <Handshake className="w-4 h-4" />
-              Partenariats
-            </div>
+            <nav aria-label="Fil d'Ariane" className="text-sm text-gray-500 mb-4">
+              <Link href="/" className="hover:text-gray-800">Accueil</Link>
+              <span className="mx-2" aria-hidden="true">/</span>
+              <span className="text-gray-700">Partenariats</span>
+            </nav>
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Construisons ensemble une agriculture durable au Senegal
+              Construisons ensemble une agriculture durable au Sénégal
             </h1>
             <p className="text-lg text-gray-600">
               Sen Biopest recherche des partenaires engages pour developper, distribuer et
@@ -185,7 +186,7 @@ export default function PartenariatsPage() {
               {
                 icon: Globe,
                 value: '14',
-                label: 'Regions couvertes',
+                label: 'Régions couvertes',
               },
               {
                 icon: Leaf,
@@ -195,7 +196,7 @@ export default function PartenariatsPage() {
               {
                 icon: TrendingUp,
                 value: '30%',
-                label: 'Reduction des pertes',
+                label: 'Réduction des pertes',
               },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
@@ -218,7 +219,7 @@ export default function PartenariatsPage() {
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Proposition envoyee !</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Proposition envoyée !</h2>
               <p className="text-gray-600 mb-6">
                 Merci pour votre interet ! Votre proposition de partenariat a bien ete enregistree.
                 Notre equipe l&apos;examinera et vous contactera prochainement.
@@ -252,7 +253,7 @@ export default function PartenariatsPage() {
                       label="Type de partenariat"
                       id="partnerType"
                       required
-                      placeholder="Selectionnez le type de partenariat"
+                      placeholder="Sélectionnez le type de partenariat"
                       options={Object.entries(partnerTypeConfig).map(([value, config]) => ({
                         value,
                         label: config.label,
@@ -279,7 +280,7 @@ export default function PartenariatsPage() {
                           <Input
                             label="Nom du contact"
                             id="contactName"
-                            placeholder="Prenom et nom du responsable"
+                            placeholder="Prénom et nom du responsable"
                             required
                             error={errors.contactName?.message}
                             {...register('contactName')}
@@ -326,7 +327,7 @@ export default function PartenariatsPage() {
                           <Select
                             label="Region"
                             id="region"
-                            placeholder="Selectionnez une region"
+                            placeholder="Sélectionnez une région"
                             options={SENEGAL_REGIONS.map((r) => ({ value: r, label: r }))}
                             error={errors.region?.message}
                             {...register('region')}
@@ -344,7 +345,7 @@ export default function PartenariatsPage() {
                         <Textarea
                           label="Proposition de partenariat"
                           id="proposal"
-                          placeholder="Decrivez votre proposition de collaboration avec Sen Biopest..."
+                          placeholder="Décrivez votre proposition de collaboration avec Sen Biopest..."
                           required
                           error={errors.proposal?.message}
                           {...register('proposal')}
@@ -352,7 +353,7 @@ export default function PartenariatsPage() {
                         <Textarea
                           label="Objectifs vises"
                           id="objectives"
-                          placeholder="Quels objectifs souhaitez-vous atteindre a travers ce partenariat ?"
+                          placeholder="Quels objectifs souhaitez-vous atteindre à travers ce partenariat ?"
                           error={errors.objectives?.message}
                           {...register('objectives')}
                         />

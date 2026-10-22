@@ -4,8 +4,10 @@ import {
   CreateCommercialRequestDto,
   UpdateCommercialRequestStatusDto,
   AddNoteDto,
+  CommercialRequestQueryDto,
 } from './commercial-requests.dto';
-import { PaginationDto } from '../common/dto/pagination.dto';
+import { Prisma } from '@prisma/client';
+import { paginate } from '../common/dto/pagination.dto';
 
 @Injectable()
 export class CommercialRequestsService {
@@ -15,10 +17,10 @@ export class CommercialRequestsService {
     return this.prisma.commercialRequest.create({ data: dto });
   }
 
-  async findAll(query: PaginationDto & { status?: string; region?: string; type?: string }) {
+  async findAll(query: CommercialRequestQueryDto) {
     const { page = 1, limit = 20, search, status, region, type } = query;
     const skip = (page - 1) * limit;
-    const where: Record<string, unknown> = {};
+    const where: Prisma.CommercialRequestWhereInput = {};
 
     if (search) {
       where.OR = [
@@ -41,7 +43,6 @@ export class CommercialRequestsService {
           notes: {
             include: { author: { select: { firstName: true, lastName: true } } },
             orderBy: { createdAt: 'desc' },
-            take: 3,
           },
         },
         skip,
@@ -51,7 +52,7 @@ export class CommercialRequestsService {
       this.prisma.commercialRequest.count({ where }),
     ]);
 
-    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
+    return paginate(data, total, page, limit);
   }
 
   async findById(id: string) {
