@@ -309,15 +309,10 @@ function CTABlock({ product }: { product: ProductDetail }) {
         </Button>
       </Link>
 
-      <button
-        className="block w-full"
-        onClick={handleAddToCart}
-      >
-        <Button size="lg" variant="secondary" className="w-full">
-          <ShoppingCart className="w-5 h-5" />
-          {added ? 'Ajoute au panier !' : 'Ajouter au panier'}
-        </Button>
-      </button>
+      <Button size="lg" variant="secondary" className="w-full" onClick={handleAddToCart}>
+        <ShoppingCart className="w-5 h-5" />
+        {added ? 'Ajouté au panier !' : 'Ajouter au panier'}
+      </Button>
 
       <a
         href={whatsappDevis}
