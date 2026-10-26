@@ -71,6 +71,34 @@ Le certificat HTTPS est obtenu automatiquement (Let's Encrypt) dès que le DNS d
 Ensuite, dans **Admin › Paramètres** : numéro WhatsApp, téléphone, email et adresse affichés sur le site.
 Puis ajoutez vos produits, formations, FAQ et témoignages.
 
+## Pas encore de nom de domaine ? (mode IP temporaire)
+
+À la question « Domaine ou IP » de `init-env.sh`, entrez **l'adresse IP du serveur**.
+Le site est alors servi en HTTP sur `http://IP_DU_VPS` (back-office : `http://IP_DU_VPS/admin`).
+
+Limites de ce mode, à réserver à la préparation du site :
+- **pas de cadenas** : le mot de passe du back-office circule en clair. Ne vous connectez pas
+  depuis un Wi-Fi public, et ne communiquez pas cette adresse à vos clients ;
+- pas de certificat HTTPS : un certificat ne peut être délivré que pour un nom de domaine.
+
+Les produits et contenus saisis dans ce mode sont **conservés** au passage au domaine.
+
+### Passer ensuite au nom de domaine
+
+1. Créez les enregistrements DNS de l'étape 1 et attendez leur propagation.
+2. Sur le serveur, ouvrez le fichier de configuration :
+   ```bash
+   cd /opt/senbiopest && nano .env
+   ```
+   - remplacez l'adresse IP de la ligne `DOMAIN=` par votre domaine (ex. `DOMAIN=senbiopest.sn`) ;
+   - supprimez les trois lignes `SITE_SCHEME=http`, `CADDYFILE=Caddyfile.ip` et `COOKIE_SECURE=false` ;
+   - enregistrez avec `Ctrl+O` puis Entrée, et quittez avec `Ctrl+X`.
+3. Relancez :
+   ```bash
+   bash deploy/deploy.sh --no-pull
+   ```
+   Le site passe en `https://votre-domaine`, avec certificat. Vos données sont conservées.
+
 ## Au quotidien
 
 | Besoin | Commande (dans `/opt/senbiopest`) |

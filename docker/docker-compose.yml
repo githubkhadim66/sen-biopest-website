@@ -31,7 +31,9 @@ services:
       JWT_EXPIRATION: ${JWT_EXPIRATION:-15m}
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-7d}
       API_PORT: '3001'
-      CORS_ORIGIN: https://${DOMAIN:?DOMAIN manquant}
+      CORS_ORIGIN: ${SITE_SCHEME:-https}://${DOMAIN:?DOMAIN manquant}
+      # false only in the temporary IP mode (no HTTPS): the session cookie must then travel over HTTP
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
       UPLOAD_DIR: /app/uploads
     depends_on:
       db:
@@ -45,7 +47,7 @@ services:
       dockerfile: docker/Dockerfile.web
       args:
         NEXT_PUBLIC_API_URL: /api
-        NEXT_PUBLIC_SITE_URL: https://${DOMAIN}
+        NEXT_PUBLIC_SITE_URL: ${SITE_SCHEME:-https}://${DOMAIN}
         NEXT_PUBLIC_WHATSAPP_NUMBER: ${WHATSAPP_NUMBER:-+221770000000}
         INTERNAL_API_URL: http://api:3001/api
     restart: unless-stopped
@@ -64,7 +66,8 @@ services:
     environment:
       DOMAIN: ${DOMAIN}
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Caddyfile (HTTPS on the domain) or Caddyfile.ip (temporary HTTP on the IP address)
+      - ./${CADDYFILE:-Caddyfile}:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:

@@ -13,15 +13,19 @@ if [ "${1:-}" != "--no-pull" ]; then
   git pull --ff-only
 fi
 
-step "Vérification du DNS de $DOMAIN"
-server_ip=$(curl -fsS -4 --max-time 5 https://ifconfig.me 2>/dev/null || true)
-dns_ip=$(getent ahostsv4 "$DOMAIN" 2>/dev/null | awk 'NR==1 {print $1}' || true)
-if [ -z "$dns_ip" ]; then
-  warn "$DOMAIN ne résout vers aucune IP : le certificat HTTPS ne pourra pas être obtenu tant que le DNS n'est pas configuré."
-elif [ -n "$server_ip" ] && [ "$dns_ip" != "$server_ip" ]; then
-  warn "$DOMAIN pointe vers $dns_ip mais ce serveur est $server_ip : vérifiez l'enregistrement A."
+if [[ "$DOMAIN" =~ ^([0-9]{1,3}[.]){3}[0-9]{1,3}$ ]]; then
+  step "Mode IP (sans domaine) : pas de vérification DNS ni de certificat HTTPS"
 else
-  echo "OK : $DOMAIN -> $dns_ip"
+  step "Vérification du DNS de $DOMAIN"
+  server_ip=$(curl -fsS -4 --max-time 5 https://ifconfig.me 2>/dev/null || true)
+  dns_ip=$(getent ahostsv4 "$DOMAIN" 2>/dev/null | awk 'NR==1 {print $1}' || true)
+  if [ -z "$dns_ip" ]; then
+    warn "$DOMAIN ne résout vers aucune IP : le certificat HTTPS ne pourra pas être obtenu tant que le DNS n'est pas configuré."
+  elif [ -n "$server_ip" ] && [ "$dns_ip" != "$server_ip" ]; then
+    warn "$DOMAIN pointe vers $dns_ip mais ce serveur est $server_ip : vérifiez l'enregistrement A."
+  else
+    echo "OK : $DOMAIN -> $dns_ip"
+  fi
 fi
 
 step "Construction des images (5 à 10 min la première fois)"
@@ -44,7 +48,7 @@ docker image prune -f >/dev/null
 compose ps
 cat <<DONE
 
-Site en ligne : https://$DOMAIN
-(le certificat HTTPS est obtenu automatiquement au premier accès, comptez quelques secondes)
+Site en ligne : ${SITE_SCHEME:-https}://$DOMAIN
+$([ "${SITE_SCHEME:-https}" = https ] && echo "(le certificat HTTPS est obtenu automatiquement au premier accès, comptez quelques secondes)")
 Journaux : docker compose -f docker/docker-compose.yml --env-file .env logs -f
 DONE

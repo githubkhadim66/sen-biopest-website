@@ -19,4 +19,4 @@ compose exec -T \
   -e ADMIN_LAST_NAME="$last_name" \
   api node dist/scripts/create-admin.js
 
-echo "Connexion : https://$DOMAIN/admin"
+echo "Connexion : ${SITE_SCHEME:-https}://$DOMAIN/admin"

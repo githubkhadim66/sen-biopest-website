@@ -22,9 +22,14 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 const REFRESH_COOKIE = 'refreshToken';
+// HTTPS-only in production, unless COOKIE_SECURE=false (temporary IP mode served over plain HTTP)
+const secureCookie =
+  process.env.COOKIE_SECURE !== undefined
+    ? process.env.COOKIE_SECURE !== 'false'
+    : process.env.NODE_ENV === 'production';
 const refreshCookieOptions: CookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
+  secure: secureCookie,
   sameSite: 'lax',
   maxAge: 7 * 24 * 60 * 60 * 1000,
   path: '/api/auth',

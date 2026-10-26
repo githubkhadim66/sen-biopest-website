@@ -1,0 +1,20 @@
+# Temporary mode without a domain name: the site is served over plain HTTP on the
+# server's IP address (no certificate can be issued for it). Selected by
+# CADDYFILE=Caddyfile.ip in .env; switch back to the default Caddyfile once a domain points here.
+:80 {
+	encode zstd gzip
+
+	@api path /api/* /uploads/*
+	handle @api {
+		request_body {
+			max_size 12MB
+		}
+		reverse_proxy api:3001
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+
+	header -Server
+}
