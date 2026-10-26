@@ -1,5 +1,7 @@
 # Production stack: docker compose -f docker/docker-compose.yml --env-file .env up -d --build
 # One domain: Caddy serves HTTPS and routes /api + /uploads to the API, everything else to the site.
+name: senbiopest
+
 services:
   db:
     image: postgres:16-alpine

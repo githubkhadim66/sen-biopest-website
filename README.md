@@ -142,34 +142,11 @@ Schéma complet : [`prisma/schema.prisma`](./prisma/schema.prisma).
 
 ## 🚢 Mise en production
 
-Pile Docker complète dans [`docker/`](./docker) : PostgreSQL, API, site et
-**Caddy** (HTTPS automatique). Tout est servi sur **un seul domaine** :
-`/api` et `/uploads` vers l'API, le reste vers le site.
+Guide pas à pas pour un VPS Ubuntu 24.04 (OVH) : [`deploy/README.md`](./deploy/README.md).
 
-1. Un serveur Linux avec Docker, et un enregistrement DNS `A` du domaine vers son IP
-   (ports 80 et 443 ouverts).
-2. Configurer :
-   ```bash
-   cp .env.production.example .env   # renseigner DOMAIN, mots de passe et secrets
-   ```
-3. Démarrer (les migrations de base sont appliquées automatiquement au démarrage de l'API) :
-   ```bash
-   docker compose -f docker/docker-compose.yml --env-file .env up -d --build
-   ```
-4. Créer le premier administrateur (pas de données de démo en production) :
-   ```bash
-   docker compose -f docker/docker-compose.yml exec \
-     -e ADMIN_EMAIL=vous@domaine.sn -e ADMIN_PASSWORD='mot-de-passe-long' \
-     api node dist/scripts/create-admin.js
-   ```
-5. Dans **Admin > Paramètres**, renseigner le numéro WhatsApp, le téléphone,
-   l'email et l'adresse affichés sur le site.
-
-**Sauvegardes** : la base (`pgdata`) et les fichiers envoyés (`uploads`) sont des
-volumes Docker. Exemple de sauvegarde quotidienne de la base :
-`docker compose -f docker/docker-compose.yml exec -T db pg_dump -U <user> senbiopest | gzip > backup-$(date +%F).sql.gz`
-
-**Santé** : `GET /api/health` (utilisé par les healthchecks Docker).
+Pile Docker (`docker/`) : PostgreSQL, API, site et **Caddy** (HTTPS automatique), le tout sur
+**un seul domaine** (`/api` et `/uploads` vers l'API, le reste vers le site). Les scripts de
+`deploy/` préparent le serveur, génèrent la configuration, déploient, sauvegardent et restaurent.
 
 ## 👤 Auteur
 
