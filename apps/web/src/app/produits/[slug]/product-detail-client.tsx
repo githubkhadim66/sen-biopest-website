@@ -442,7 +442,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
                   {product.crops?.length > 0 && (
                     <div>
                       <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                        Cultures ciblees
+                        Cultures ciblées
                       </span>
                       <div className="flex flex-wrap gap-1.5 mt-1.5">
                         {product.crops.map((c) => (

@@ -163,7 +163,7 @@ function FilterSidebar({
 
       <Select
         id="filter-category"
-        label="Categorie"
+        label="Catégorie"
         placeholder="Toutes les catégories"
         options={categoryOptions}
         value={category}
@@ -172,7 +172,7 @@ function FilterSidebar({
 
       <Select
         id="filter-crop"
-        label="Culture ciblee"
+        label="Culture ciblée"
         placeholder="Toutes les cultures"
         options={cropOptions}
         value={crop}
@@ -190,7 +190,7 @@ function FilterSidebar({
 
       <Select
         id="filter-availability"
-        label="Disponibilite"
+        label="Disponibilité"
         placeholder="Toute disponibilité"
         options={AVAILABILITY_OPTIONS}
         value={availability}
@@ -529,12 +529,13 @@ export default function ProduitsPage() {
               <span className="text-gray-700">Produits</span>
             </nav>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-4">
-              Nos <span className="text-primary-600">biopesticides</span> naturels
+              Nos <span className="text-primary-600">biopesticides et huiles essentielles</span>, issus
+              des plantes du Sénégal
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl">
-              Découvrez notre gamme de biopesticides à base de plantes locales
-              sénégalaises. Des solutions naturelles et efficaces pour protéger
-              vos cultures.
+              Découvrez notre gamme de biopesticides et d&apos;huiles essentielles à base de plantes
+              locales. Des solutions naturelles et efficaces pour protéger vos cultures, respecter
+              votre sol et préserver votre santé.
             </p>
           </div>
         </div>
@@ -693,13 +694,13 @@ export default function ProduitsPage() {
                 <div className="text-center py-16">
                   <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                   <h3 className="font-semibold text-gray-900 mb-2">
-                    Aucun produit trouve
+                    Aucun produit trouvé
                   </h3>
                   <p className="text-sm text-gray-600 mb-4">
                     Essayez de modifier vos filtres ou votre recherche.
                   </p>
                   <Button variant="outline" size="sm" onClick={resetFilters}>
-                    Reinitialiser les filtres
+                    Réinitialiser les filtres
                   </Button>
                 </div>
               )}
@@ -711,7 +712,7 @@ export default function ProduitsPage() {
                   <div className="flex items-center justify-between mb-6">
                     <p className="text-sm text-gray-500">
                       {data?.total ?? products.length} produit
-                      {(data?.total ?? products.length) > 1 ? 's' : ''} trouve
+                      {(data?.total ?? products.length) > 1 ? 's' : ''} trouvé
                       {(data?.total ?? products.length) > 1 ? 's' : ''}
                     </p>
                   </div>
