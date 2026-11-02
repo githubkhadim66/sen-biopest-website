@@ -139,8 +139,8 @@ export default function HomePage() {
 
             <FadeInUp delay={0.5}>
               <p className="text-lg sm:text-xl text-gray-200 mb-10 max-w-2xl leading-relaxed">
-                Sen Biopest développe des solutions biologiques efficaces contre les ravageurs,
-                à base de plantes locales sénégalaises. Pour une agriculture saine, durable et rentable.
+                Sen Biopest transforme les plantes locales en biopesticides et en huiles essentielles.
+                Protégez vos cultures naturellement, améliorez vos rendements et préservez votre santé et votre sol.
               </p>
             </FadeInUp>
 
