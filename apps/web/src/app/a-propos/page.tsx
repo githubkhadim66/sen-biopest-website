@@ -93,7 +93,7 @@ export default function AProposPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <div className="space-y-6">
               <div className="inline-flex items-center gap-2 text-primary-600">
-                <Eye className="w-6 h-6" />
+                <Eye className="w-6 h-6 shrink-0" />
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Notre vision : nourrir sans empoisonner</h2>
               </div>
               <p className="text-gray-600 leading-relaxed">
@@ -105,17 +105,19 @@ export default function AProposPage() {
             </div>
             <div className="space-y-6">
               <div className="inline-flex items-center gap-2 text-primary-600">
-                <Target className="w-6 h-6" />
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Notre mission</h2>
+                <Target className="w-6 h-6 shrink-0" />
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                  Notre mission : protéger vos cultures avec la force des plantes du Sénégal
+                </h2>
               </div>
               <p className="text-gray-600 leading-relaxed">
-                Développer, produire et distribuer des biopesticides de qualité, formulés à partir des plantes du terroir sénégalais. Nous accompagnons les producteurs dans leur transition vers une agriculture biologique à travers :
+                Développer, produire et distribuer des biopesticides et des huiles essentielles de qualité, formulés à partir de plantes locales. Nous accompagnons les producteurs vers une agriculture biologique grâce à :
               </p>
               <ul className="space-y-3">
                 {[
                   'La recherche et l\'innovation sur les plantes locales à potentiel pesticide',
-                  'La formulation de produits adaptés aux ravageurs et cultures du Sénégal',
-                  'La formation et le renforcement de capacités des producteurs',
+                  'La formulation de produits adaptés aux ravageurs et aux cultures du Sénégal',
+                  'La formation et le renforcement des capacités des producteurs',
                   'L\'accompagnement technique personnalisé sur le terrain',
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2 text-sm text-gray-700">
