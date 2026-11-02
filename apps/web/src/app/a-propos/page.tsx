@@ -94,13 +94,13 @@ export default function AProposPage() {
             <div className="space-y-6">
               <div className="inline-flex items-center gap-2 text-primary-600">
                 <Eye className="w-6 h-6" />
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Notre vision</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Notre vision : nourrir sans empoisonner</h2>
               </div>
               <p className="text-gray-600 leading-relaxed">
-                Un Sénégal et une Afrique de l'Ouest où l'agriculture est productive, saine et respectueuse de l'environnement. Nous croyons en un modèle agricole qui nourrit les populations sans empoisonner les sols, l'eau ni les producteurs.
+                Nous rêvons d'un Sénégal et d'une Afrique de l'Ouest où l'agriculture est productive, saine et respectueuse de l'environnement.
               </p>
               <p className="text-gray-600 leading-relaxed">
-                Nous aspirons à devenir le leader des biopesticides en Afrique de l'Ouest, en prouvant que la protection naturelle des cultures est non seulement possible, mais plus performante et durable que les solutions chimiques.
+                Notre ambition : devenir une référence des biopesticides en Afrique de l'Ouest, en prouvant que la protection naturelle des cultures est efficace et durable.
               </p>
             </div>
             <div className="space-y-6">
