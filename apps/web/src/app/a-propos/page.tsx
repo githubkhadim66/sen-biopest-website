@@ -80,7 +80,7 @@ export default function AProposPage() {
               <span className="text-primary-600">issus du terroir sénégalais</span>
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl">
-              Sen Biopest est une entreprise sénégalaise dédiée à la recherche, la formulation et la distribution de biopesticides à base de plantes locales. Notre mission : offrir aux producteurs des alternatives naturelles, efficaces et accessibles aux pesticides chimiques.
+              Née en 2023, Sen Biopest est une entreprise sénégalaise qui fait de la recherche, formule et distribue des biopesticides et des huiles essentielles à base de plantes locales. Notre mission : offrir aux producteurs des alternatives naturelles, efficaces et accessibles aux pesticides chimiques.
             </p>
           </div>
         </div>
