@@ -25,6 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import { useSiteSettings } from '@/hooks/use-site-settings';
 import { PageHeader } from '@/components/layout/page-header';
 import { BrandEmblem } from '@/components/ui/brand-logo';
+import { ProductPhoto } from '@/components/ui/product-photo';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -210,12 +211,7 @@ function ProductCard({ product }: { product: Product }) {
         className="group relative h-56 bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center overflow-hidden"
       >
         {(product.primaryImage || (product.images && product.images.length > 0)) ? (
-          <img
-            src={resolveImageUrl(product.primaryImage || product.images[0]?.url || '')}
-            alt={product.name}
-            loading="lazy"
-            className="w-full h-full object-contain p-3 transition-transform duration-500 group-hover:scale-105"
-          />
+          <ProductPhoto src={resolveImageUrl(product.primaryImage || product.images[0]?.url || '')} alt={product.name} />
         ) : (
           <BrandEmblem size={64} className="opacity-25 grayscale-[30%]" />
         )}
@@ -312,14 +308,10 @@ function FeaturedProductHighlight({ product }: { product: Product }) {
         <Link
           href={`/produits/${product.slug}`}
           aria-label={`Voir la fiche ${product.name}`}
-          className="h-64 md:h-auto md:min-h-72 bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center"
+          className="group relative h-64 md:h-auto md:min-h-72 bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center"
         >
           {(product.primaryImage || (product.images && product.images.length > 0)) ? (
-            <img
-              src={resolveImageUrl(product.primaryImage || product.images[0]?.url || '')}
-              alt={product.name}
-              className="w-full h-full max-h-80 object-contain p-4"
-            />
+            <ProductPhoto src={resolveImageUrl(product.primaryImage || product.images[0]?.url || '')} alt={product.name} lazy={false} />
           ) : (
             <BrandEmblem size={96} className="opacity-25 grayscale-[30%]" />
           )}

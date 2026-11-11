@@ -26,6 +26,7 @@ import {
   CountUp,
 } from '@/components/ui/animations';
 import { BrandEmblem } from '@/components/ui/brand-logo';
+import { ProductPhoto } from '@/components/ui/product-photo';
 
 // Real photos from Unsplash — agriculture, Africa, crops
 const IMAGES = {
@@ -185,12 +186,7 @@ export default function HomePage() {
                           className="group relative block h-56 overflow-hidden bg-gradient-to-br from-primary-50 to-secondary-50"
                         >
                           {imageUrl ? (
-                            <img
-                              src={resolveImageUrl(imageUrl)}
-                              alt={product.name}
-                              loading="lazy"
-                              className="w-full h-full object-contain p-3 transition-transform duration-500 group-hover:scale-105"
-                            />
+                            <ProductPhoto src={resolveImageUrl(imageUrl)} alt={product.name} />
                           ) : (
                             <div className="flex items-center justify-center h-full">
                               <BrandEmblem size={64} className="opacity-25 grayscale-[30%]" />

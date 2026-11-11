@@ -31,6 +31,7 @@ import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/hooks/use-cart';
 import { useSiteSettings } from '@/hooks/use-site-settings';
 import { BrandEmblem } from '@/components/ui/brand-logo';
+import { ProductPhoto } from '@/components/ui/product-photo';
 import { CtaCard } from '@/components/ui/cta-card';
 import { Lightbox } from '@/components/ui/lightbox';
 
@@ -161,12 +162,8 @@ function ImageGallery({ images, name }: { images: { id: string; url: string; alt
         aria-label="Agrandir la photo"
         className="group relative block w-full bg-gradient-to-br from-primary-50 to-secondary-50 rounded-xl overflow-hidden h-80 sm:h-[28rem] cursor-zoom-in"
       >
-        <img
-          src={imageUrls[selectedIndex]}
-          alt={`${name} - photo ${selectedIndex + 1}`}
-          className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-[1.03]"
-        />
-        <span className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm">
+        <ProductPhoto src={imageUrls[selectedIndex] ?? ''} alt={`${name} - photo ${selectedIndex + 1}`} lazy={false} />
+        <span className="absolute z-10 bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm">
           <Maximize2 className="w-3.5 h-3.5" /> Agrandir
         </span>
       </button>
@@ -252,15 +249,10 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
       <Link
         href={`/produits/${product.slug}`}
         aria-label={`Voir la fiche ${product.name}`}
-        className="h-48 bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center overflow-hidden"
+        className="group relative h-48 bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center overflow-hidden"
       >
         {(product.primaryImage || (product.images && product.images.length > 0)) ? (
-          <img
-            src={resolveImageUrl(product.primaryImage || product.images[0]?.url || '')}
-            alt={product.name}
-            loading="lazy"
-            className="w-full h-full object-contain p-3"
-          />
+          <ProductPhoto src={resolveImageUrl(product.primaryImage || product.images[0]?.url || '')} alt={product.name} />
         ) : (
           <BrandEmblem size={48} className="opacity-25 grayscale-[30%]" />
         )}
