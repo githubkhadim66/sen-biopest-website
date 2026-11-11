@@ -105,7 +105,10 @@ export class TrainingsService {
     });
     if (!training) throw new NotFoundException('Formation introuvable');
 
-    if (training.date && training.date < new Date()) {
+    // Open until the end of the first day (Senegal is UTC+0, like the stored dates)
+    const closesAt = training.date ? new Date(training.date) : null;
+    closesAt?.setUTCHours(23, 59, 59, 999);
+    if (closesAt && closesAt < new Date()) {
       throw new BadRequestException('Les inscriptions à cette formation sont closes');
     }
     if (training.maxParticipants && training._count.registrations >= training.maxParticipants) {

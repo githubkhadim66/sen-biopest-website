@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '@/lib/api';
-import { formatDate } from '@/lib/utils';
+import { formatDate, getTrainingStatus } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
@@ -129,7 +129,8 @@ export default function TrainingDetailPage() {
   if (!training) return null;
 
   const isFull = !!training.maxParticipants && training.registrationCount >= training.maxParticipants;
-  const isPast = !!training.date && new Date(training.date) < new Date();
+  const status = getTrainingStatus(training.date, training.endDate);
+  const isPast = status !== 'upcoming';
   const registrationClosed = !submitted && (isFull || isPast);
 
   return (
@@ -270,7 +271,7 @@ export default function TrainingDetailPage() {
           <section id="inscription" className="section-padding bg-gray-50">
             <div className="container-narrow text-center">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                {isPast ? 'Cette session est terminée' : 'Cette formation est complète'}
+                {status === 'past' ? 'Cette session est terminée' : status === 'ongoing' ? 'Cette session a commencé : inscriptions closes' : 'Cette formation est complète'}
               </h2>
               <p className="text-gray-600 mb-6">
                 Contactez-nous pour être informé(e) des prochaines sessions.

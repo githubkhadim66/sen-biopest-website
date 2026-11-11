@@ -73,3 +73,25 @@ export function statusColor(status: string): string {
   };
   return colors[status] || 'bg-gray-100 text-gray-800';
 }
+
+/** End of the calendar day of a date (a session dated "8 octobre" stays open all day long). */
+function endOfDay(value: string | Date): Date {
+  const d = new Date(value);
+  d.setUTCHours(23, 59, 59, 999); // dates are stored at UTC midnight (Senegal is UTC+0)
+  return d;
+}
+
+/**
+ * Training timeline: registrations close once the first day is over;
+ * the session is "terminée" once its last day (endDate, or date) is over.
+ */
+export function getTrainingStatus(
+  date?: string | Date | null,
+  endDate?: string | Date | null,
+  now: Date = new Date(),
+): 'upcoming' | 'ongoing' | 'past' {
+  if (!date) return 'upcoming';
+  if (endOfDay(endDate || date) < now) return 'past';
+  if (endOfDay(date) < now) return 'ongoing';
+  return 'upcoming';
+}

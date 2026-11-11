@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
-import { formatDate } from '@/lib/utils';
+import { cn, formatDate, getTrainingStatus } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,7 @@ import {
   Clock,
   ArrowRight,
   Loader2,
+  Lock,
 } from 'lucide-react';
 import type { TrainingSummary, TrainingModality } from '@sen-biopest/types';
 import { PageHeader } from '@/components/layout/page-header';
@@ -39,7 +40,14 @@ export default function FormationsPage() {
   useEffect(() => {
     api
       .get<TrainingSummary[]>('/trainings')
-      .then((res) => setTrainings(Array.isArray(res) ? res : []))
+      .then((res) => {
+        const list = Array.isArray(res) ? res : [];
+        // Upcoming sessions first (soonest first), finished ones after (most recent first)
+        const time = (t: TrainingSummary) => (t.date ? new Date(t.date).getTime() : Infinity);
+        const open = list.filter((t) => getTrainingStatus(t.date, t.endDate) !== 'past').sort((a, b) => time(a) - time(b));
+        const done = list.filter((t) => getTrainingStatus(t.date, t.endDate) === 'past').sort((a, b) => time(b) - time(a));
+        setTrainings([...open, ...done]);
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
@@ -95,10 +103,15 @@ export default function FormationsPage() {
           {/* Cards keep a fixed width and stay centred, so 1 or 2 trainings do not hug the left edge */}
           {!loading && !error && trainings.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(300px,380px))] justify-center gap-6">
-              {trainings.map((training) => (
-                <Card key={training.id} hover className="flex flex-col">
+              {trainings.map((training) => {
+                const status = getTrainingStatus(training.date, training.endDate);
+                const closed = status !== 'upcoming';
+                return (
+                <Card key={training.id} hover={!closed} className={cn('flex flex-col', closed && 'bg-gray-50/60')}>
                   <CardBody className="flex flex-col flex-1 space-y-3">
                     <div className="flex items-center gap-2 flex-wrap">
+                      {status === 'past' && <Badge variant="danger">Terminée</Badge>}
+                      {status === 'ongoing' && <Badge variant="danger">En cours · inscriptions closes</Badge>}
                       <Badge variant={modalityColors[training.modality]}>
                         {modalityLabels[training.modality]}
                       </Badge>
@@ -107,8 +120,10 @@ export default function FormationsPage() {
                       )}
                     </div>
 
-                    <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
-                      {training.title}
+                    <h3 className={cn('text-lg font-semibold line-clamp-2', closed ? 'text-gray-600' : 'text-gray-900')}>
+                      <Link href={`/formations/${training.slug}`} className="hover:text-primary-600 transition-colors">
+                        {training.title}
+                      </Link>
                     </h3>
 
                     <p className="text-sm text-gray-600 line-clamp-3 flex-1">
@@ -117,9 +132,12 @@ export default function FormationsPage() {
 
                     <div className="space-y-1.5 text-sm text-gray-500">
                       {training.date && (
-                        <div className="flex items-center gap-2">
+                        <div className={cn('flex items-center gap-2', status === 'past' && 'text-red-600 font-medium')}>
                           <CalendarDays className="w-4 h-4 shrink-0" />
-                          <span>{formatDate(training.date)}</span>
+                          <span>
+                            {formatDate(training.date)}
+                            {training.endDate && training.endDate.slice(0, 10) !== training.date.slice(0, 10) && ` – ${formatDate(training.endDate)}`}
+                          </span>
                         </div>
                       )}
                       {training.location && (
@@ -142,14 +160,23 @@ export default function FormationsPage() {
                       )}
                     </div>
 
-                    <Link href={`/formations/${training.slug}`} className="pt-2">
-                      <Button size="sm" className="w-full">
-                        S&apos;inscrire <ArrowRight className="w-4 h-4" />
-                      </Button>
-                    </Link>
+                    {closed ? (
+                      <div className="pt-2">
+                        <Button size="sm" variant="outline" disabled className="w-full border-red-200 text-red-700 bg-red-50 disabled:opacity-100 cursor-not-allowed">
+                          <Lock className="w-4 h-4" /> Inscriptions closes
+                        </Button>
+                      </div>
+                    ) : (
+                      <Link href={`/formations/${training.slug}`} className="pt-2">
+                        <Button size="sm" className="w-full">
+                          S&apos;inscrire <ArrowRight className="w-4 h-4" />
+                        </Button>
+                      </Link>
+                    )}
                   </CardBody>
                 </Card>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
