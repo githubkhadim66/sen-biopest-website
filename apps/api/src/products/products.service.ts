@@ -222,7 +222,10 @@ export class ProductsService {
 
   // Crops
   async getCrops() {
-    return this.prisma.crop.findMany({ orderBy: { name: 'asc' } });
+    return this.prisma.crop.findMany({
+      orderBy: { name: 'asc' },
+      include: { _count: { select: { products: { where: { product: { isPublished: true } } } } } },
+    });
   }
 
   async createCrop(dto: CreateCropDto) {
@@ -231,7 +234,10 @@ export class ProductsService {
 
   // Pests
   async getPests() {
-    return this.prisma.pest.findMany({ orderBy: { name: 'asc' } });
+    return this.prisma.pest.findMany({
+      orderBy: { name: 'asc' },
+      include: { _count: { select: { products: { where: { product: { isPublished: true } } } } } },
+    });
   }
 
   async createPest(dto: CreatePestDto) {

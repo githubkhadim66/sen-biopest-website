@@ -72,7 +72,50 @@ interface Taxon {
   name: string;
 }
 
-function TaxonPicker({ label, items, selected, onChange }: { label: string; items: Taxon[]; selected: string[]; onChange: (ids: string[]) => void }) {
+/** Small inline "add a new value" field: type a name, press Entrée or click Ajouter. */
+function QuickAdd({ placeholder, onAdd }: { placeholder: string; onAdd: (name: string) => Promise<void> }) {
+  const [value, setValue] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  const submit = async () => {
+    const name = value.trim();
+    if (!name || busy) return;
+    setBusy(true);
+    setErr('');
+    try {
+      await onAdd(name);
+      setValue('');
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Ajout impossible');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="mt-2">
+      <div className="flex gap-2">
+        <input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            // Enter must add the value, not submit the whole product form
+            if (e.key === 'Enter') { e.preventDefault(); submit(); }
+          }}
+          placeholder={placeholder}
+          className="flex-1 min-w-0 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+        />
+        <Button type="button" size="sm" variant="outline" onClick={submit} disabled={busy || !value.trim()}>
+          {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />} Ajouter
+        </Button>
+      </div>
+      {err && <p className="mt-1 text-xs text-red-600">{err}</p>}
+    </div>
+  );
+}
+
+function TaxonPicker({ label, items, selected, onChange, onAdd, addPlaceholder }: { label: string; items: Taxon[]; selected: string[]; onChange: (ids: string[]) => void; onAdd: (name: string) => Promise<void>; addPlaceholder: string }) {
   return (
     <div>
       <p className="block text-sm font-medium text-gray-700 mb-2">{label}</p>
@@ -93,8 +136,9 @@ function TaxonPicker({ label, items, selected, onChange }: { label: string; item
             </button>
           );
         })}
-        {items.length === 0 && <span className="text-xs text-gray-400">Aucun élément</span>}
+        {items.length === 0 && <span className="text-xs text-gray-400">Aucun élément pour l'instant : ajoutez-en ci-dessous.</span>}
       </div>
+      <QuickAdd placeholder={addPlaceholder} onAdd={onAdd} />
     </div>
   );
 }
@@ -144,6 +188,24 @@ export default function ProduitsAdminPage() {
       setError('Impossible de charger les catégories, cultures et ravageurs');
     }
   }, []);
+
+  // Create a category / crop / pest from the product form and select it right away
+  const byName = <T extends { name: string }>(a: T, b: T) => a.name.localeCompare(b.name, 'fr');
+  const addCategory = async (name: string) => {
+    const created = await api.post<{ id: string; name: string }>('/admin/products/categories', { name });
+    setCategories((list) => [...list, created]);
+    setForm((f) => ({ ...f, categoryId: created.id }));
+  };
+  const addCrop = async (name: string) => {
+    const created = await api.post<Taxon>('/admin/products/crops', { name });
+    setCrops((list) => [...list, created].sort(byName));
+    setForm((f) => ({ ...f, cropIds: [...f.cropIds, created.id] }));
+  };
+  const addPest = async (name: string) => {
+    const created = await api.post<Taxon>('/admin/products/pests', { name });
+    setPests((list) => [...list, created].sort(byName));
+    setForm((f) => ({ ...f, pestIds: [...f.pestIds, created.id] }));
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -308,13 +370,16 @@ export default function ProduitsAdminPage() {
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                 />
-                <Select
-                  label="Catégorie"
-                  options={categories.map((c) => ({ value: c.id, label: c.name }))}
-                  placeholder="Sélectionner une catégorie"
-                  value={form.categoryId}
-                  onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-                />
+                <div>
+                  <Select
+                    label="Catégorie"
+                    options={categories.map((c) => ({ value: c.id, label: c.name }))}
+                    placeholder={categories.length ? 'Sélectionner une catégorie' : 'Aucune catégorie : créez-en une ci-dessous'}
+                    value={form.categoryId}
+                    onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+                  />
+                  <QuickAdd placeholder="Nouvelle catégorie (ex. Insecticides biologiques)" onAdd={addCategory} />
+                </div>
               </div>
               <Input
                 label="Description courte"
@@ -376,8 +441,8 @@ export default function ProduitsAdminPage() {
                 </div>
               </div>
 
-              <TaxonPicker label="Cultures ciblées" items={crops} selected={form.cropIds} onChange={(cropIds) => setForm({ ...form, cropIds })} />
-              <TaxonPicker label="Ravageurs / maladies ciblés" items={pests} selected={form.pestIds} onChange={(pestIds) => setForm({ ...form, pestIds })} />
+              <TaxonPicker label="Cultures ciblées" items={crops} selected={form.cropIds} onChange={(cropIds) => setForm({ ...form, cropIds })} onAdd={addCrop} addPlaceholder="Nouvelle culture (ex. Tomate)" />
+              <TaxonPicker label="Ravageurs / maladies ciblés" items={pests} selected={form.pestIds} onChange={(pestIds) => setForm({ ...form, pestIds })} onAdd={addPest} addPlaceholder="Nouveau ravageur ou maladie (ex. Pucerons)" />
 
               {/* Upload images */}
               <div>

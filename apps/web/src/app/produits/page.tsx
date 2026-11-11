@@ -126,22 +126,25 @@ function FilterSidebar({
   onReset: () => void;
   className?: string;
 }) {
-  const { data: categories } = useQuery<{ id: string; name: string; slug: string }[]>({
+  type FilterValue = { id: string; name: string; slug: string; _count?: { products: number } };
+  const { data: categories } = useQuery<FilterValue[]>({
     queryKey: ['product-categories'],
     queryFn: () => api.get('/products/categories'),
   });
-  const { data: crops } = useQuery<{ id: string; name: string; slug: string }[]>({
+  const { data: crops } = useQuery<FilterValue[]>({
     queryKey: ['product-crops'],
     queryFn: () => api.get('/products/crops'),
   });
-  const { data: pests } = useQuery<{ id: string; name: string; slug: string }[]>({
+  const { data: pests } = useQuery<FilterValue[]>({
     queryKey: ['product-pests'],
     queryFn: () => api.get('/products/pests'),
   });
 
-  const categoryOptions = (categories ?? []).map((c) => ({ value: c.slug, label: c.name }));
-  const cropOptions = (crops ?? []).map((c) => ({ value: c.slug, label: c.name }));
-  const pestOptions = (pests ?? []).map((p) => ({ value: p.slug, label: p.name }));
+  // Only offer values that actually match at least one published product (no dead-end filters)
+  const used = (v: FilterValue) => v._count === undefined || v._count.products > 0;
+  const categoryOptions = (categories ?? []).filter(used).map((c) => ({ value: c.slug, label: c.name }));
+  const cropOptions = (crops ?? []).filter(used).map((c) => ({ value: c.slug, label: c.name }));
+  const pestOptions = (pests ?? []).filter(used).map((p) => ({ value: p.slug, label: p.name }));
 
   const hasFilters = category || crop || pest || availability;
 
@@ -162,6 +165,7 @@ function FilterSidebar({
         )}
       </div>
 
+      {categoryOptions.length > 0 && (
       <Select
         id="filter-category"
         label="Catégorie"
@@ -170,7 +174,9 @@ function FilterSidebar({
         value={category}
         onChange={(e) => onCategoryChange(e.target.value)}
       />
+      )}
 
+      {cropOptions.length > 0 && (
       <Select
         id="filter-crop"
         label="Culture ciblée"
@@ -179,7 +185,9 @@ function FilterSidebar({
         value={crop}
         onChange={(e) => onCropChange(e.target.value)}
       />
+      )}
 
+      {pestOptions.length > 0 && (
       <Select
         id="filter-pest"
         label="Ravageur / maladie"
@@ -188,6 +196,7 @@ function FilterSidebar({
         value={pest}
         onChange={(e) => onPestChange(e.target.value)}
       />
+      )}
 
       <Select
         id="filter-availability"
