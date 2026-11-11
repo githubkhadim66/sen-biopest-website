@@ -410,26 +410,27 @@ export default function HomePage() {
             </div>
           </FadeInUp>
 
-          <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((t) => (
-              <StaggerItem key={t.name}>
-                <div>
+          {/* Wrapping row centred as a group: 1, 2 or an incomplete last row never hug the left edge */}
+          <StaggerContainer className="flex flex-wrap justify-center gap-6">
+            {testimonials.map((t, index) => (
+              <StaggerItem key={`${t.name}-${index}`} className="min-w-0 w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)] max-w-md">
+                <div className="h-full">
                   <Card className="h-full border-0 shadow-lg hover:shadow-xl transition-shadow">
-                    <CardBody className="p-8">
+                    <CardBody className="p-6 sm:p-8 flex flex-col h-full">
                       <div className="flex gap-1 mb-4">
                         {Array.from({ length: 5 }).map((_, i) => (
                           <Star key={i} className={`w-4 h-4 ${i < t.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'}`} />
                         ))}
                       </div>
                       <Quote className="w-8 h-8 text-primary-100 mb-3" />
-                      <p className="text-gray-700 mb-6 leading-relaxed italic">&ldquo;{t.text}&rdquo;</p>
+                      <p className="text-gray-700 mb-6 leading-relaxed italic break-words [overflow-wrap:anywhere] line-clamp-[8] flex-1">&ldquo;{t.text}&rdquo;</p>
                       <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
-                        <div className="w-12 h-12 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                          {t.name[0]}
+                        <div className="w-12 h-12 shrink-0 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                          {(t.name.trim()[0] || '?').toUpperCase()}
                         </div>
-                        <div>
-                          <p className="font-bold text-gray-900">{t.name}</p>
-                          <p className="text-xs text-gray-500">{[t.role, t.location].filter(Boolean).join(' — ')}</p>
+                        <div className="min-w-0">
+                          <p className="font-bold text-gray-900 break-words">{t.name}</p>
+                          <p className="text-xs text-gray-500 break-words">{[t.role, t.location].filter(Boolean).join(' — ')}</p>
                         </div>
                       </div>
                     </CardBody>
