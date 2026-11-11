@@ -17,9 +17,10 @@ import {
   Loader2,
 } from 'lucide-react';
 import type { TrainingSummary, TrainingModality } from '@sen-biopest/types';
+import { PageHeader } from '@/components/layout/page-header';
 
 const modalityLabels: Record<TrainingModality, string> = {
-  PRESENTIEL: 'Presentiel',
+  PRESENTIEL: 'Présentiel',
   EN_LIGNE: 'En ligne',
   HYBRIDE: 'Hybride',
 };
@@ -46,27 +47,23 @@ export default function FormationsPage() {
   return (
     <>
       {/* Hero */}
-      <section className="bg-gradient-to-br from-primary-50 via-white to-green-50">
-        <div className="container-wide py-12 sm:py-16 lg:py-20">
-          <div className="max-w-3xl">
-            <nav aria-label="Fil d'Ariane" className="text-sm text-gray-500 mb-4">
-              <Link href="/" className="hover:text-gray-800">Accueil</Link>
-              <span className="mx-2" aria-hidden="true">/</span>
-              <span className="text-gray-700">Formations</span>
-            </nav>
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Renforcez vos compétences en agriculture biologique
-            </h1>
-            <p className="text-lg text-gray-600">
-              Decouvrez nos formations pratiques sur l&apos;utilisation des biopesticides,
-              la protection des cultures et les bonnes pratiques agricoles.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHeader
+        breadcrumb={[{ label: 'Formations' }]}
+        title={
+          <>
+            Renforcez vos compétences en agriculture biologique
+          </>
+        }
+        description={
+          <>
+            Découvrez nos formations pratiques sur l&apos;utilisation des biopesticides,
+            la protection des cultures et les bonnes pratiques agricoles.
+          </>
+        }
+      />
 
       {/* Training Grid */}
-      <section className="section-padding bg-white">
+      <section className="section-first bg-white">
         <div className="container-wide">
           {loading && (
             <div className="flex items-center justify-center py-20">
@@ -95,8 +92,9 @@ export default function FormationsPage() {
             </div>
           )}
 
+          {/* Cards keep a fixed width and stay centred, so 1 or 2 trainings do not hug the left edge */}
           {!loading && !error && trainings.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(300px,380px))] justify-center gap-6">
               {trainings.map((training) => (
                 <Card key={training.id} hover className="flex flex-col">
                   <CardBody className="flex flex-col flex-1 space-y-3">

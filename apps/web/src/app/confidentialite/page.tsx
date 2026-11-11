@@ -11,7 +11,7 @@ export default function ConfidentialitePage() {
     <>
       <section className="section-padding bg-white">
         <div className="container-narrow">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-8">
+          <h1 className="text-2xl leading-tight sm:text-[1.75rem] lg:text-[2rem] font-bold text-gray-900 mb-8">
             Politique de confidentialité
           </h1>
 

@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import {
   Search,
-  Leaf,
   SlidersHorizontal,
   X,
   ChevronLeft,
@@ -14,7 +13,6 @@ import {
   FileText,
   Star,
   Bug,
-  Wheat,
   ArrowRight,
 } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -25,6 +23,8 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useSiteSettings } from '@/hooks/use-site-settings';
+import { PageHeader } from '@/components/layout/page-header';
+import { BrandEmblem } from '@/components/ui/brand-logo';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -156,7 +156,7 @@ function FilterSidebar({
             onClick={onReset}
             className="text-xs text-primary-600 hover:underline"
           >
-            Reinitialiser
+            Réinitialiser
           </button>
         )}
       </div>
@@ -201,28 +201,26 @@ function FilterSidebar({
 }
 
 function ProductCard({ product }: { product: Product }) {
-  const { whatsappNumber: WHATSAPP_NUMBER } = useSiteSettings();
-
-  const whatsappUrl = getWhatsAppUrl(
-    WHATSAPP_NUMBER,
-    `Bonjour Sen Biopest, je suis interesse(e) par le produit "${product.name}". Pouvez-vous me donner plus d'informations ?`,
-  );
-
   return (
     <Card hover className="flex flex-col h-full">
       {/* Image placeholder */}
-      <div className="relative h-48 bg-gradient-to-br from-primary-50 to-green-50 flex items-center justify-center overflow-hidden">
+      <Link
+        href={`/produits/${product.slug}`}
+        aria-label={`Voir la fiche ${product.name}`}
+        className="group relative h-56 bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center overflow-hidden"
+      >
         {(product.primaryImage || (product.images && product.images.length > 0)) ? (
           <img
             src={resolveImageUrl(product.primaryImage || product.images[0]?.url || '')}
             alt={product.name}
-            className="w-full h-full object-cover"
+            loading="lazy"
+            className="w-full h-full object-contain p-3 transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <Leaf className="w-16 h-16 text-primary-200" />
+          <BrandEmblem size={64} className="opacity-25 grayscale-[30%]" />
         )}
         {product.isFeatured && (
-          <span className="absolute top-3 left-3 inline-flex items-center gap-1 bg-secondary-500 text-white text-xs font-semibold px-2.5 py-1 rounded-full">
+          <span className="absolute top-3 left-3 inline-flex items-center gap-1 bg-secondary-500 text-gray-900 text-xs font-semibold px-2.5 py-1 rounded-full">
             <Star className="w-3 h-3" />
             Produit phare
           </span>
@@ -233,7 +231,7 @@ function ProductCard({ product }: { product: Product }) {
         >
           {AVAILABILITY_LABELS[product.availability] ?? product.availability}
         </Badge>
-      </div>
+      </Link>
 
       <CardBody className="flex flex-col flex-1 gap-3">
         {/* Category */}
@@ -262,9 +260,8 @@ function ProductCard({ product }: { product: Product }) {
             {product.crops.slice(0, 3).map((c) => (
               <span
                 key={c}
-                className="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full"
+                className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-md"
               >
-                <Wheat className="w-3 h-3" />
                 {c}
               </span>
             ))}
@@ -291,20 +288,10 @@ function ProductCard({ product }: { product: Product }) {
             href="/contact"
             onClick={() => trackClick('demander_devis', product.slug)}
           >
-            <Button size="sm" variant="outline" title="Demander un devis">
-              <FileText className="w-4 h-4" />
+            <Button size="sm" variant="outline">
+              <FileText className="w-4 h-4" /> Devis
             </Button>
           </Link>
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => trackClick('whatsapp_product', product.slug)}
-          >
-            <Button size="sm" variant="whatsapp" title="Contacter via WhatsApp">
-              <MessageCircle className="w-4 h-4" />
-            </Button>
-          </a>
         </div>
       </CardBody>
     </Card>
@@ -316,23 +303,27 @@ function FeaturedProductHighlight({ product }: { product: Product }) {
 
   const whatsappUrl = getWhatsAppUrl(
     WHATSAPP_NUMBER,
-    `Bonjour Sen Biopest, je suis interesse(e) par votre produit phare "${product.name}". Pouvez-vous m'en dire plus ?`,
+    `Bonjour Sen Biopest, je suis intéressé(e) par votre produit phare "${product.name}". Pouvez-vous m'en dire plus ?`,
   );
 
   return (
     <Card className="border-primary-200 ring-1 ring-primary-100 overflow-hidden">
       <div className="grid grid-cols-1 md:grid-cols-2">
-        <div className="h-56 md:h-auto bg-gradient-to-br from-primary-100 to-primary-50 flex items-center justify-center">
+        <Link
+          href={`/produits/${product.slug}`}
+          aria-label={`Voir la fiche ${product.name}`}
+          className="h-64 md:h-auto md:min-h-72 bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center"
+        >
           {(product.primaryImage || (product.images && product.images.length > 0)) ? (
             <img
               src={resolveImageUrl(product.primaryImage || product.images[0]?.url || '')}
               alt={product.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full max-h-80 object-contain p-4"
             />
           ) : (
-            <Leaf className="w-24 h-24 text-primary-300" />
+            <BrandEmblem size={96} className="opacity-25 grayscale-[30%]" />
           )}
-        </div>
+        </Link>
         <CardBody className="flex flex-col gap-4 justify-center">
           <div className="inline-flex items-center gap-1.5 self-start bg-secondary-100 text-secondary-700 text-xs font-semibold px-3 py-1 rounded-full">
             <Star className="w-3.5 h-3.5" />
@@ -344,9 +335,9 @@ function FeaturedProductHighlight({ product }: { product: Product }) {
           {product.crops && product.crops.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {product.crops.map((c) => (
-                <Badge key={c} variant="info">
+                <span key={c} className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-md">
                   {c}
-                </Badge>
+                </span>
               ))}
             </div>
           )}
@@ -520,40 +511,36 @@ export default function ProduitsPage() {
   return (
     <>
       {/* ============ HERO ============ */}
-      <section className="bg-gradient-to-br from-primary-50 via-white to-green-50">
-        <div className="container-wide py-12 sm:py-16 lg:py-20">
-          <div className="max-w-3xl">
-            <nav aria-label="Fil d'Ariane" className="text-sm text-gray-500 mb-4">
-              <Link href="/" className="hover:text-gray-800">Accueil</Link>
-              <span className="mx-2" aria-hidden="true">/</span>
-              <span className="text-gray-700">Produits</span>
-            </nav>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-4">
-              Nos <span className="text-primary-600">biopesticides et huiles essentielles</span>, issus
-              des plantes du Sénégal
-            </h1>
-            <p className="text-lg text-gray-600 max-w-2xl">
-              Découvrez notre gamme de biopesticides et d&apos;huiles essentielles à base de plantes
-              locales. Des solutions naturelles et efficaces pour protéger vos cultures, respecter
-              votre sol et préserver votre santé.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHeader
+        breadcrumb={[{ label: 'Produits' }]}
+        title={
+          <>
+            Nos <span className="text-primary-600">biopesticides et huiles essentielles</span>, issus
+            des plantes du Sénégal
+          </>
+        }
+        description={
+          <>
+            Découvrez notre gamme de biopesticides et d&apos;huiles essentielles à base de plantes
+            locales. Des solutions naturelles et efficaces pour protéger vos cultures, respecter
+            votre sol et préserver votre santé.
+          </>
+        }
+      />
 
       {/* ============ MAIN CONTENT ============ */}
-      <section className="section-padding bg-gray-50">
+      <section className="section-first bg-gray-50">
         <div className="container-wide">
           {/* Search bar */}
-          <div className="mb-8">
-            <div className="relative max-w-xl">
+          <div className="mb-6 lg:mb-8">
+            <div className="relative max-w-2xl mx-auto">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
               <Input
                 id="product-search"
                 placeholder="Rechercher un produit, une culture, un ravageur..."
                 value={search}
                 onChange={handleSearch}
-                className="pl-10"
+                className="pl-10 py-3 text-base shadow-sm"
               />
             </div>
           </div>
@@ -739,8 +726,8 @@ export default function ProduitsPage() {
           </div>
 
           {/* Bottom CTA */}
-          <div className="mt-16 bg-primary-600 rounded-2xl text-white p-8 sm:p-12 text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-4">
+          <div className="mt-12 bg-primary-600 rounded-2xl text-white p-6 sm:p-10 text-center">
+            <h2 className="text-xl sm:text-2xl font-bold mb-4">
               Vous ne trouvez pas ce que vous cherchez ?
             </h2>
             <p className="text-primary-100 max-w-xl mx-auto mb-6">

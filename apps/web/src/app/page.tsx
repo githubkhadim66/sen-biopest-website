@@ -7,10 +7,8 @@ import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody } from '@/components/ui/card';
 import {
-  Leaf,
   Handshake,
   ArrowRight,
-  CheckCircle,
   Sprout,
   FlaskConical,
   HeartHandshake,
@@ -19,30 +17,19 @@ import {
   Star,
   GraduationCap,
   Quote,
+  ChevronDown,
 } from 'lucide-react';
 import {
   FadeInUp,
-  FadeInFrom,
   StaggerContainer,
   StaggerItem,
+  CountUp,
 } from '@/components/ui/animations';
+import { BrandEmblem } from '@/components/ui/brand-logo';
 
 // Real photos from Unsplash — agriculture, Africa, crops
 const IMAGES = {
   hero: 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1400&q=80',
-  tomatoes: 'https://images.unsplash.com/photo-1592841200221-a6898f307baa?w=800&q=80',
-  farmer: 'https://images.unsplash.com/photo-1589923188900-85dae523342b?w=800&q=80',
-  crops: 'https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=800&q=80',
-  neem: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&q=80',
-  vegetables: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&q=80',
-  field: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1400&q=80',
-  greenhouse: 'https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?w=800&q=80',
-  hands: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=800&q=80',
-  spray: 'https://images.unsplash.com/photo-1586771107445-b3e7eb5e1638?w=800&q=80',
-  training: 'https://images.unsplash.com/photo-1531545514256-b1400bc00f31?w=800&q=80',
-  partnership: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=800&q=80',
-  leaf: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&q=80',
-  market: 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800&q=80',
 };
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '');
@@ -108,39 +95,39 @@ export default function HomePage() {
   return (
     <>
       {/* ============ HERO ============ */}
-      <section className="relative min-h-[90vh] flex items-center overflow-hidden">
+      <section className="relative min-h-[100svh] flex items-center overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <Image
             src={IMAGES.hero}
             alt="Champ agricole au Sénégal"
             fill
-            className="object-cover"
+            className="object-cover hero-zoom"
             priority
             sizes="100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-gray-900/85 via-gray-900/60 to-gray-900/30" />
         </div>
 
-        <div className="container-wide relative z-10 py-20 lg:py-32">
+        <div className="container-wide relative z-10 py-16 lg:py-20">
           <div className="max-w-3xl">
             <FadeInUp delay={0.1}>
-              <p className="text-sm font-medium text-primary-300 mb-6">
+              <p className="text-sm font-medium text-secondary-300 mb-6">
                 Biopesticides à base de plantes locales — Sénégal
               </p>
             </FadeInUp>
 
             <FadeInUp delay={0.1}>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-[1.1] mb-6">
+              <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-white leading-[1.1] mb-6">
                 Protégez vos cultures{' '}
-                <span className="text-primary-400">naturellement</span>
+                <span className="text-secondary-400">naturellement</span>
               </h1>
             </FadeInUp>
 
             <FadeInUp delay={0.5}>
-              <p className="text-lg sm:text-xl text-gray-200 mb-10 max-w-2xl leading-relaxed">
-                Sen Biopest transforme les plantes locales en biopesticides et en huiles essentielles.
-                Protégez vos cultures naturellement, améliorez vos rendements et préservez votre santé et votre sol.
+              <p className="text-base sm:text-lg text-gray-200 mb-10 max-w-2xl leading-relaxed">
+                Des biopesticides et huiles essentielles issus des plantes du Sénégal,
+                pour de meilleurs rendements et un sol préservé.
               </p>
             </FadeInUp>
 
@@ -158,25 +145,27 @@ export default function HomePage() {
                   </Link>
               </div>
             </FadeInUp>
-
-            {/* Trust bar */}
-            <FadeInUp delay={0.9}>
-              <p className="mt-10 text-sm text-gray-300">
-                Ingrédients naturels · Fabriqué au Sénégal · Plus de 500 producteurs accompagnés
-              </p>
-            </FadeInUp>
           </div>
         </div>
 
+        {/* Scroll hint */}
+        <a
+          href="#produits-phares"
+          aria-label="Faire défiler vers les produits"
+          className="scroll-hint absolute bottom-6 left-1/2 -translate-x-1/2 z-10 hidden sm:flex flex-col items-center gap-1 text-white/80 hover:text-white"
+        >
+          <span className="text-xs tracking-wide">Découvrir</span>
+          <ChevronDown className="w-5 h-5" />
+        </a>
       </section>
 
       {/* ============ PRODUITS PHARES ============ */}
-      <section className="section-padding bg-white overflow-hidden">
+      <section id="produits-phares" className="section-padding bg-white overflow-hidden scroll-mt-16">
         <div className="container-wide">
           <FadeInUp>
-            <div className="mb-12 max-w-2xl">
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Produits phares</h2>
-              <p className="text-gray-600 text-lg">
+            <div className="mb-8 lg:mb-10 max-w-2xl mx-auto text-center">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Produits phares</h2>
+              <p className="text-gray-600">
                 Des biopesticides formulés à partir de plantes locales sénégalaises, testés et approuvés par les producteurs.
               </p>
             </div>
@@ -189,27 +178,31 @@ export default function HomePage() {
                 return (
                   <StaggerItem key={product.id}>
                     <div className="h-full">
-                      <Card hover className={`overflow-hidden h-full ${product.isFeatured ? 'border-primary-200 ring-2 ring-primary-100' : ''}`}>
-                        <div className="relative h-56 overflow-hidden bg-gradient-to-br from-primary-50 to-green-50">
+                      <Card hover className={`overflow-hidden h-full flex flex-col ${product.isFeatured ? 'border-primary-200 ring-2 ring-primary-100' : ''}`}>
+                        <Link
+                          href={`/produits/${product.slug}`}
+                          aria-label={`Voir la fiche ${product.name}`}
+                          className="group relative block h-56 overflow-hidden bg-gradient-to-br from-primary-50 to-secondary-50"
+                        >
                           {imageUrl ? (
                             <img
                               src={resolveImageUrl(imageUrl)}
                               alt={product.name}
-                              className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                              loading="lazy"
+                              className="w-full h-full object-contain p-3 transition-transform duration-500 group-hover:scale-105"
                             />
                           ) : (
                             <div className="flex items-center justify-center h-full">
-                              <Leaf className="w-16 h-16 text-primary-200" />
+                              <BrandEmblem size={64} className="opacity-25 grayscale-[30%]" />
                             </div>
                           )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                           {product.isFeatured && (
                             <span className="absolute top-4 left-4 bg-primary-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
                               Produit phare
                             </span>
                           )}
-                        </div>
-                        <CardBody className="p-6">
+                        </Link>
+                        <CardBody className="p-5 flex flex-col flex-1">
                           <h3 className="text-xl font-bold text-gray-900 mb-2">{product.name}</h3>
                           <p className="text-sm text-gray-600 mb-4 leading-relaxed line-clamp-3">
                             {product.shortDescription}
@@ -223,7 +216,7 @@ export default function HomePage() {
                               ))}
                             </div>
                           )}
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 mt-auto pt-1">
                             <Link href={`/produits/${product.slug}`} className="flex-1">
                               <Button size="sm" className="w-full">Voir la fiche</Button>
                             </Link>
@@ -270,9 +263,9 @@ export default function HomePage() {
       <section className="section-padding bg-gray-50 overflow-hidden">
         <div className="container-wide">
           <FadeInUp>
-            <div className="mb-12 max-w-2xl">
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Nos services</h2>
-              <p className="text-gray-600 text-lg">
+            <div className="mb-8 lg:mb-10 max-w-2xl mx-auto text-center">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Nos services</h2>
+              <p className="text-gray-600">
                 Au-delà des produits, Sen Biopest accompagne les producteurs avec des services complets.
               </p>
             </div>
@@ -280,10 +273,10 @@ export default function HomePage() {
 
           <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { icon: Sprout, title: 'Accompagnement technique', desc: 'Diagnostic et conseil personnalisé pour vos cultures.', href: '/accompagnement-technique', img: IMAGES.farmer },
-              { icon: GraduationCap, title: 'Formation', desc: 'Sessions pratiques sur les bonnes pratiques agricoles.', href: '/formations', img: IMAGES.training },
-              { icon: FlaskConical, title: 'Recherche & Innovation', desc: 'Nouvelles formulations à base de plantes locales.', href: '/services', img: IMAGES.crops },
-              { icon: Handshake, title: 'Partenariats', desc: 'Collaboration avec distributeurs et institutions.', href: '/partenariats', img: IMAGES.partnership },
+              { icon: Sprout, title: 'Accompagnement technique', desc: 'Diagnostic et conseil personnalisé pour vos cultures.', href: '/accompagnement-technique', img: '/images/accompagnement.webp' },
+              { icon: GraduationCap, title: 'Formation', desc: 'Sessions pratiques sur les bonnes pratiques agricoles.', href: '/formations', img: '/images/formation.webp' },
+              { icon: FlaskConical, title: 'Recherche & Innovation', desc: 'Nouvelles formulations à base de plantes locales.', href: '/services', img: '/images/laboratoire.webp' },
+              { icon: Handshake, title: 'Partenariats', desc: 'Collaboration avec distributeurs et institutions.', href: '/partenariats', img: '/images/femmes-formees.webp' },
             ].map((s) => (
               <StaggerItem key={s.title}>
                 <Link href={s.href}>
@@ -316,43 +309,20 @@ export default function HomePage() {
       </section>
 
       {/* ============ IMPACTS ============ */}
-      <section className="relative py-20 sm:py-28 overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <Image
-            src={IMAGES.field}
-            alt="Champ agricole"
-            fill
-            className="object-cover"
-            sizes="100vw"
-          />
-          <div className="absolute inset-0 bg-primary-900/85" />
-        </div>
-
-        <div className="container-wide relative z-10">
-          <FadeInUp>
-            <div className="mb-12 max-w-2xl">
-              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Notre impact</h2>
-              <p className="text-primary-100 text-lg">
-                Des résultats mesurables pour les producteurs et l&apos;environnement.
-              </p>
-            </div>
-          </FadeInUp>
-
-          <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+      <section className="py-10 lg:py-12 bg-white border-y border-gray-100">
+        <div className="container-wide">
+          <h2 className="sr-only">Notre impact</h2>
+          <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {[
-              { value: 500, suffix: '+', label: 'Producteurs accompagnés' },
-              { value: 14, suffix: '', label: 'Régions couvertes' },
-              { value: 100, suffix: '%', label: 'Ingrédients naturels' },
-              { value: 30, suffix: '%', label: 'Réduction des pertes' },
+              { value: '500+', label: 'Producteurs accompagnés' },
+              { value: '14', label: 'Régions couvertes' },
+              { value: '100%', label: 'Ingrédients naturels' },
+              { value: '30%', label: 'Réduction des pertes' },
             ].map((stat) => (
               <StaggerItem key={stat.label}>
-                <div
-                  className="text-center group"
-                >
-                  <div className="text-4xl sm:text-5xl font-bold text-white mb-2">
-                    {stat.value}{stat.suffix}
-                  </div>
-                  <div className="text-sm text-primary-200 font-medium">{stat.label}</div>
+                <div className="rounded-xl bg-primary-50/70 border border-primary-100 px-4 py-4 text-center">
+                  <CountUp value={stat.value} className="block text-2xl sm:text-3xl font-bold text-primary-700 font-display" />
+                  <div className="text-xs sm:text-sm text-gray-600 mt-1">{stat.label}</div>
                 </div>
               </StaggerItem>
             ))}
@@ -364,8 +334,8 @@ export default function HomePage() {
       <section className="section-padding bg-white overflow-hidden">
         <div className="container-wide">
           <FadeInUp>
-            <div className="mb-12 max-w-2xl">
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Comment ça marche ?</h2>
+            <div className="mb-8 lg:mb-10 max-w-2xl mx-auto text-center">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Comment ça marche ?</h2>
             </div>
           </FadeInUp>
 
@@ -381,7 +351,7 @@ export default function HomePage() {
                   <div
                     className="text-center relative"
                   >
-                    <div className="text-4xl font-bold text-primary-600 mb-4">
+                    <div className="text-3xl font-bold text-primary-600 mb-3">
                       {item.step}
                     </div>
                     <h3 className="font-bold text-gray-900 text-lg mb-3">{item.title}</h3>
@@ -394,112 +364,12 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ============ ACCOMPAGNEMENT ============ */}
-      <section className="section-padding bg-gray-50 overflow-hidden">
-        <div className="container-wide">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <FadeInFrom direction="left">
-              <div>
-                <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">Accompagnement technique</h2>
-                <p className="text-gray-600 text-lg mb-8 leading-relaxed">
-                  Un problème sur vos cultures ? Nos conseillers vous aident à identifier le ravageur et vous proposent une solution adaptée et naturelle.
-                </p>
-                <StaggerContainer className="space-y-4 mb-8">
-                  {[
-                    'Diagnostic personnalisé de vos cultures',
-                    'Envoyez des photos pour un avis rapide',
-                    'Recommandations d\'application sur mesure',
-                    'Suivi de la prise en charge',
-                  ].map((item, i) => (
-                    <StaggerItem key={item}>
-                      <li
-                        className="flex items-start gap-3 text-gray-700"
-                      >
-                        <CheckCircle className="w-5 h-5 text-primary-600 shrink-0 mt-0.5" />
-                        {item}
-                      </li>
-                    </StaggerItem>
-                  ))}
-                </StaggerContainer>
-                  <Link href="/accompagnement-technique">
-                    <Button size="lg">
-                      Demander un accompagnement <ArrowRight className="w-5 h-5" />
-                    </Button>
-                  </Link>
-              </div>
-            </FadeInFrom>
-
-            <FadeInFrom direction="right">
-              <div className="relative">
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                  <Image
-                    src={IMAGES.farmer}
-                    alt="Accompagnement technique des producteurs"
-                    width={600}
-                    height={450}
-                    className="w-full h-auto object-cover"
-                  />
-                </div>
-              </div>
-            </FadeInFrom>
-          </div>
-        </div>
-      </section>
-
-      {/* ============ FORMATIONS ============ */}
-      <section className="section-padding bg-white overflow-hidden">
-        <div className="container-wide">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <FadeInFrom direction="left" className="order-2 lg:order-1">
-              <div className="relative">
-                <div className="rounded-2xl overflow-hidden shadow-2xl">
-                  <Image
-                    src={IMAGES.training}
-                    alt="Formation sur les biopesticides"
-                    width={600}
-                    height={450}
-                    className="w-full h-auto object-cover"
-                  />
-                </div>
-              </div>
-            </FadeInFrom>
-
-            <FadeInFrom direction="right" className="order-1 lg:order-2">
-              <div>
-                <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">Formations pratiques</h2>
-                <p className="text-gray-600 text-lg mb-8 leading-relaxed">
-                  Des sessions de formation conçues pour transmettre les bonnes pratiques d&apos;utilisation des biopesticides et de protection intégrée des cultures.
-                </p>
-                <div className="grid grid-cols-2 gap-4 mb-8">
-                  {[
-                    { value: '2 jours', label: 'Sessions pratiques' },
-                    { value: 'Gratuit', label: 'Pour coopératives' },
-                    { value: '30+', label: 'Participants / session' },
-                    { value: '14', label: 'Régions couvertes' },
-                  ].map((item) => (
-                    <div key={item.label} className="bg-gray-50 rounded-xl p-4 text-center">
-                      <p className="font-bold text-primary-600 text-lg">{item.value}</p>
-                      <p className="text-xs text-gray-500 mt-1">{item.label}</p>
-                    </div>
-                  ))}
-                </div>
-                  <Link href="/formations">
-                    <Button size="lg">
-                      Voir les formations <ArrowRight className="w-5 h-5" />
-                    </Button>
-                  </Link>
-              </div>
-            </FadeInFrom>
-          </div>
-        </div>
-      </section>
-
       {/* ============ PARTENARIATS ============ */}
-      <section className="relative py-20 sm:py-24 overflow-hidden">
+      <section className="relative py-14 sm:py-16 overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image
-            src={IMAGES.partnership}
-            alt="Partenariats agricoles"
+            src="/images/femmes-formees.webp"
+            alt="Productrices formées par Sen Biopest"
             fill
             className="object-cover"
             sizes="100vw"
@@ -509,7 +379,7 @@ export default function HomePage() {
 
         <div className="container-wide relative z-10 text-center">
           <FadeInUp>
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">Devenez partenaire</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-6">Devenez partenaire</h2>
             <p className="text-earth-100 max-w-2xl mx-auto mb-10 text-lg leading-relaxed">
               Fournisseurs, distributeurs, institutions, programmes : collaborons pour une agriculture durable au Sénégal et en Afrique de l&apos;Ouest.
             </p>
@@ -539,8 +409,8 @@ export default function HomePage() {
       <section className="section-padding bg-white overflow-hidden">
         <div className="container-wide">
           <FadeInUp>
-            <div className="mb-12 max-w-2xl">
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Ils nous font confiance</h2>
+            <div className="mb-8 lg:mb-10 max-w-2xl mx-auto text-center">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Ils nous font confiance</h2>
             </div>
           </FadeInUp>
 
@@ -579,8 +449,8 @@ export default function HomePage() {
       <section className="section-padding bg-gray-50 overflow-hidden">
         <div className="container-narrow">
           <FadeInUp>
-            <div className="text-center mb-12">
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Questions fréquentes</h2>
+            <div className="text-center mb-8 lg:mb-10">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Questions fréquentes</h2>
             </div>
           </FadeInUp>
 
@@ -615,11 +485,11 @@ export default function HomePage() {
       </section>
 
       {/* ============ CTA FINAL ============ */}
-      <section className="relative py-24 sm:py-32 overflow-hidden">
+      <section className="relative py-16 sm:py-20 overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image
-            src={IMAGES.vegetables}
-            alt="Légumes frais du maraîchage"
+            src="/images/produits.webp"
+            alt="Flacons d'huile essentielle d'eucalyptus Sen Biopest"
             fill
             className="object-cover"
             sizes="100vw"
@@ -629,12 +499,12 @@ export default function HomePage() {
 
         <div className="container-wide relative z-10 text-center">
           <FadeInUp>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
+            <h2 className="text-2xl sm:text-[1.75rem] font-bold text-white mb-6">
               Prêt à protéger vos cultures naturellement ?
             </h2>
           </FadeInUp>
           <FadeInUp delay={0.2}>
-            <p className="text-primary-100 max-w-xl mx-auto mb-10 text-lg leading-relaxed">
+            <p className="text-primary-100 max-w-xl mx-auto mb-8 leading-relaxed">
               Contactez-nous dès maintenant pour un devis gratuit ou un conseil personnalisé.
             </p>
           </FadeInUp>

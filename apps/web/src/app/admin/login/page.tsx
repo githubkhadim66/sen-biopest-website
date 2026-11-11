@@ -2,7 +2,7 @@
 
 import { useState, useEffect, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { Leaf } from 'lucide-react';
+import Image from 'next/image';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,11 +46,9 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-primary-600 rounded-xl mb-4">
-            <Leaf className="h-7 w-7 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Sen Biopest</h1>
-          <p className="text-sm text-gray-500 mt-1">Administration</p>
+          <Image src="/brand/logo.png" alt="Sen Biopest" width={200} height={150} priority className="mx-auto mb-4" />
+          <h1 className="sr-only">Sen Biopest</h1>
+          <p className="text-sm text-gray-500">Administration</p>
         </div>
 
         {/* Form */}
@@ -91,7 +89,7 @@ export default function AdminLoginPage() {
         </form>
 
         <p className="text-center text-xs text-gray-400 mt-6">
-          Sen Biopest &mdash; Solutions biopesticides au Senegal
+          Sen Biopest &mdash; Biopesticides et huiles essentielles au Sénégal
         </p>
       </div>
     </div>

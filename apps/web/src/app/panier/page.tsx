@@ -305,7 +305,7 @@ export default function PanierPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
                     id="firstName"
-                    label="Prenom"
+                    label="Prénom"
                     required
                     value={form.firstName}
                     onChange={(e) => updateForm('firstName', e.target.value)}
@@ -321,7 +321,7 @@ export default function PanierPage() {
                   />
                   <Input
                     id="phone"
-                    label="Telephone"
+                    label="Téléphone"
                     required
                     type="tel"
                     value={form.phone}
@@ -354,7 +354,7 @@ export default function PanierPage() {
                   />
                   <Select
                     id="region"
-                    label="Region"
+                    label="Région"
                     options={REGIONS}
                     placeholder="Sélectionnez votre région"
                     value={form.region}

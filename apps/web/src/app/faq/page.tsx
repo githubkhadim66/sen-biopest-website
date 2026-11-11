@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { getWhatsAppUrl } from '@/lib/utils';
 import { useSiteSettings } from '@/hooks/use-site-settings';
+import { PageHeader } from '@/components/layout/page-header';
 
 interface FaqItem {
   id: string;
@@ -137,27 +138,22 @@ export default function FaqPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative bg-gradient-to-br from-primary-50 via-white to-green-50 overflow-hidden">
-        <div className="container-wide py-16 sm:py-20 lg:py-24">
-          <div className="max-w-3xl">
-            <nav aria-label="Fil d'Ariane" className="text-sm text-gray-500 mb-4">
-              <Link href="/" className="hover:text-gray-800">Accueil</Link>
-              <span className="mx-2" aria-hidden="true">/</span>
-              <span className="text-gray-700">FAQ</span>
-            </nav>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-6">
-              Questions fréquentes
-            </h1>
-            <p className="text-lg text-gray-600 max-w-2xl">
-              Retrouvez les réponses aux questions les plus posées sur nos produits, services et modes de collaboration.
-            </p>
-          </div>
-        </div>
-        <div className="absolute right-0 top-0 w-1/3 h-full bg-gradient-to-l from-primary-100/40 to-transparent hidden lg:block" />
-      </section>
+      <PageHeader
+        breadcrumb={[{ label: 'FAQ' }]}
+        title={
+          <>
+            Questions fréquentes
+          </>
+        }
+        description={
+          <>
+            Retrouvez les réponses aux questions les plus posées sur nos produits, services et modes de collaboration.
+          </>
+        }
+      />
 
       {/* Search & Filter */}
-      <section className="section-padding bg-white">
+      <section className="section-first bg-white">
         <div className="container-narrow">
           {/* Search */}
           <div className="relative mb-8">
@@ -238,7 +234,7 @@ export default function FaqPage() {
       <section className="section-padding bg-gray-50">
         <div className="container-narrow text-center">
           <MessageCircle className="w-12 h-12 text-primary-300 mx-auto mb-6" />
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
             Vous ne trouvez pas votre réponse ?
           </h2>
           <p className="text-gray-600 max-w-xl mx-auto mb-8">

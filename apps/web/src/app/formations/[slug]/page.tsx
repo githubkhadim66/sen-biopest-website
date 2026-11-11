@@ -33,7 +33,7 @@ import {
 } from '@sen-biopest/types';
 
 const modalityLabels: Record<TrainingModality, string> = {
-  PRESENTIEL: 'Presentiel',
+  PRESENTIEL: 'Présentiel',
   EN_LIGNE: 'En ligne',
   HYBRIDE: 'Hybride',
 };
@@ -301,7 +301,7 @@ export default function TrainingDetailPage() {
           ) : (
             <>
               <div className="text-center mb-8">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
                   Inscription à la formation
                 </h2>
                 <p className="text-gray-600">
@@ -320,7 +320,7 @@ export default function TrainingDetailPage() {
                   <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <Input
-                        label="Prenom"
+                        label="Prénom"
                         id="firstName"
                         placeholder="Votre prénom"
                         required
@@ -339,7 +339,7 @@ export default function TrainingDetailPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <Input
-                        label="Telephone"
+                        label="Téléphone"
                         id="phone"
                         type="tel"
                         placeholder="+221 7X XXX XX XX"
@@ -387,7 +387,7 @@ export default function TrainingDetailPage() {
                         {...register('locality')}
                       />
                       <Select
-                        label="Region"
+                        label="Région"
                         id="region"
                         placeholder="Sélectionnez une région"
                         options={SENEGAL_REGIONS.map((r) => ({ value: r, label: r }))}

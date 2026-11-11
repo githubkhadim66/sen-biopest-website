@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, ChevronDown, Leaf, ShoppingCart } from 'lucide-react';
+import { Menu, X, ChevronDown, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { BrandLogo } from '@/components/ui/brand-logo';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/hooks/use-cart';
 
@@ -53,17 +54,8 @@ export function Header() {
       <div className="container-wide">
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-            <Leaf className={cn(
-              'w-7 h-7 transition-colors',
-              isTransparent ? 'text-primary-400' : 'text-primary-600',
-            )} />
-            <span className={cn(
-              'transition-colors',
-              isTransparent ? 'text-white' : 'text-primary-700',
-            )}>
-              Sen Biopest
-            </span>
+          <Link href="/" aria-label="Sen Biopest — accueil">
+            <BrandLogo tone={isTransparent ? 'dark' : 'light'} size={44} />
           </Link>
 
           {/* Desktop Nav */}
@@ -80,7 +72,7 @@ export function Header() {
                   <Link
                     href={item.href}
                     className={cn(
-                      'relative flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg transition-colors',
+                      'relative flex items-center gap-1 px-2.5 xl:px-3 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors',
                       isTransparent
                         ? 'text-white/80 hover:text-white hover:bg-white/10'
                         : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50',
@@ -113,7 +105,7 @@ export function Header() {
           </nav>
 
           {/* Desktop CTA */}
-          <div className="hidden lg:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-2 xl:gap-3 shrink-0">
             <Link href="/panier" className="relative p-2 rounded-lg transition-colors hover:bg-gray-100">
               <ShoppingCart className={cn(
                 'w-5 h-5 transition-colors',
@@ -125,7 +117,8 @@ export function Header() {
                 </span>
               )}
             </Link>
-            <Link href="/produits">
+            {/* Same destination as the "Produits" link: only shown when there is room for it */}
+            <Link href="/produits" className="hidden xl:block">
               <Button
                 variant="outline"
                 size="sm"
@@ -137,7 +130,7 @@ export function Header() {
               </Button>
             </Link>
             <Link href="/contact">
-              <Button size="sm">Demander un devis</Button>
+              <Button size="sm" className="whitespace-nowrap">Demander un devis</Button>
             </Link>
           </div>
 

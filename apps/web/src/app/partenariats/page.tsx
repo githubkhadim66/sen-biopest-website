@@ -20,13 +20,11 @@ import {
   Wallet,
   FolderKanban,
   ShoppingCart,
-  Users,
-  Globe,
-  Leaf,
-  TrendingUp,
+  ArrowDown,
 } from 'lucide-react';
 import Link from 'next/link';
 import { SENEGAL_REGIONS, PartnerType } from '@sen-biopest/types';
+import { PageHeader } from '@/components/layout/page-header';
 
 const partnerTypeConfig: Record<
   string,
@@ -121,30 +119,33 @@ export default function PartenariatsPage() {
   return (
     <>
       {/* Hero */}
-      <section className="bg-gradient-to-br from-primary-50 via-white to-green-50">
-        <div className="container-wide py-12 sm:py-16 lg:py-20">
-          <div className="max-w-3xl">
-            <nav aria-label="Fil d'Ariane" className="text-sm text-gray-500 mb-4">
-              <Link href="/" className="hover:text-gray-800">Accueil</Link>
-              <span className="mx-2" aria-hidden="true">/</span>
-              <span className="text-gray-700">Partenariats</span>
-            </nav>
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Construisons ensemble une agriculture durable au Sénégal
-            </h1>
-            <p className="text-lg text-gray-600">
-              Sen Biopest recherche des partenaires engages pour developper, distribuer et
-              promouvoir les biopesticides a base de plantes locales dans toute l&apos;Afrique de l&apos;Ouest.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHeader
+        breadcrumb={[{ label: 'Partenariats' }]}
+        title={
+          <>
+            Construisons ensemble une agriculture durable au Sénégal
+          </>
+        }
+        description={
+          <>
+            Sen Biopest recherche des partenaires engagés pour développer, distribuer et
+            promouvoir les biopesticides à base de plantes locales dans toute l&apos;Afrique de l&apos;Ouest.
+          </>
+        }
+        actions={
+          <a href="#formulaire">
+            <Button>
+              Proposer un partenariat <ArrowDown className="w-4 h-4" />
+            </Button>
+          </a>
+        }
+      />
 
       {/* Partner Types */}
-      <section className="section-padding bg-white">
+      <section className="section-first bg-white">
         <div className="container-wide">
           <div className="text-center mb-10">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
               Types de partenariats
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
@@ -168,43 +169,24 @@ export default function PartenariatsPage() {
       </section>
 
       {/* Impact */}
-      <section className="section-padding bg-primary-700 text-white">
+      <section className="section-padding bg-white">
         <div className="container-wide">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-4">L&apos;impact de nos partenariats</h2>
-            <p className="text-primary-100 max-w-2xl mx-auto">
-              Ensemble, nous creons un impact positif pour les producteurs et l&apos;environnement.
+          <div className="text-center max-w-2xl mx-auto mb-8">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">L&apos;impact de nos partenariats</h2>
+            <p className="text-gray-600">
+              Ensemble, nous créons un impact positif pour les producteurs et l&apos;environnement.
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 max-w-4xl mx-auto">
             {[
-              {
-                icon: Users,
-                value: '500+',
-                label: 'Producteurs accompagnes',
-              },
-              {
-                icon: Globe,
-                value: '14',
-                label: 'Régions couvertes',
-              },
-              {
-                icon: Leaf,
-                value: '100%',
-                label: 'Solutions biologiques',
-              },
-              {
-                icon: TrendingUp,
-                value: '30%',
-                label: 'Réduction des pertes',
-              },
+              { value: '500+', label: 'Producteurs accompagnés' },
+              { value: '14', label: 'Régions couvertes' },
+              { value: '100%', label: 'Solutions biologiques' },
+              { value: '30%', label: 'Réduction des pertes' },
             ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="mx-auto w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-3">
-                  <stat.icon className="w-6 h-6 text-secondary-400" />
-                </div>
-                <div className="text-3xl font-bold text-secondary-400 mb-1">{stat.value}</div>
-                <div className="text-sm text-primary-100">{stat.label}</div>
+              <div key={stat.label} className="rounded-xl bg-primary-50/70 border border-primary-100 px-4 py-4 text-center">
+                <div className="text-2xl font-bold text-primary-700 font-display">{stat.value}</div>
+                <div className="text-xs text-gray-600 mt-1">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -212,7 +194,7 @@ export default function PartenariatsPage() {
       </section>
 
       {/* Partnership Form */}
-      <section className="section-padding bg-gray-50">
+      <section id="formulaire" className="section-padding bg-gray-50 scroll-mt-20">
         <div className="container-narrow">
           {submitted ? (
             <div className="text-center py-12">
@@ -222,7 +204,7 @@ export default function PartenariatsPage() {
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Proposition envoyée !</h2>
               <p className="text-gray-600 mb-6">
                 Merci pour votre interet ! Votre proposition de partenariat a bien ete enregistree.
-                Notre equipe l&apos;examinera et vous contactera prochainement.
+                Notre équipe l&apos;examinera et vous contactera prochainement.
               </p>
               <Link href="/">
                 <Button variant="outline">Retour a l&apos;accueil</Button>
@@ -231,7 +213,7 @@ export default function PartenariatsPage() {
           ) : (
             <>
               <div className="text-center mb-8">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
                   Proposer un partenariat
                 </h2>
                 <p className="text-gray-600">
@@ -289,7 +271,7 @@ export default function PartenariatsPage() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <Input
-                            label="Telephone"
+                            label="Téléphone"
                             id="phone"
                             type="tel"
                             placeholder="+221 7X XXX XX XX"
@@ -325,7 +307,7 @@ export default function PartenariatsPage() {
                             {...register('locality')}
                           />
                           <Select
-                            label="Region"
+                            label="Région"
                             id="region"
                             placeholder="Sélectionnez une région"
                             options={SENEGAL_REGIONS.map((r) => ({ value: r, label: r }))}

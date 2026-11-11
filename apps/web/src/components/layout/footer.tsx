@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useSiteSettings } from '@/hooks/use-site-settings';
 import { formatPhone } from '@/lib/utils';
-import { Leaf, Phone, Mail, MapPin, ArrowUp } from 'lucide-react';
+import { Phone, Mail, MapPin, ArrowUp } from 'lucide-react';
+import { BrandLogo } from '@/components/ui/brand-logo';
 
 export function Footer() {
   const site = useSiteSettings();
@@ -19,9 +20,8 @@ export function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
           {/* Brand */}
           <div className="space-y-4">
-            <Link href="/" className="flex items-center gap-2 text-white font-bold text-lg">
-              <Leaf className="w-6 h-6 text-primary-400" />
-              <span>Sen Biopest</span>
+            <Link href="/" aria-label="Sen Biopest — accueil" className="inline-block">
+              <BrandLogo tone="dark" size={48} />
             </Link>
             <p className="text-sm leading-relaxed">
               Biopesticides naturels à base de plantes locales pour une agriculture saine et durable au Sénégal.

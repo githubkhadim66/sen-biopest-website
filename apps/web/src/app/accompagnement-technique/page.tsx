@@ -19,9 +19,11 @@ import {
   Search,
   MessageCircle,
   ClipboardCheck,
+  ArrowDown,
 } from 'lucide-react';
 import Link from 'next/link';
 import { SENEGAL_REGIONS, ActorType } from '@sen-biopest/types';
+import { PageHeader } from '@/components/layout/page-header';
 
 const actorTypeLabels: Record<string, string> = {
   PRODUCTEUR: 'Producteur',
@@ -110,28 +112,31 @@ export default function AccompagnementTechniquePage() {
   return (
     <>
       {/* Hero */}
-      <section className="bg-gradient-to-br from-primary-50 via-white to-green-50">
-        <div className="container-wide py-12 sm:py-16 lg:py-20">
-          <div className="max-w-3xl">
-            <nav aria-label="Fil d'Ariane" className="text-sm text-gray-500 mb-4">
-              <Link href="/" className="hover:text-gray-800">Accueil</Link>
-              <span className="mx-2" aria-hidden="true">/</span>
-              <span className="text-gray-700">Accompagnement technique</span>
-            </nav>
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Un problème sur vos cultures ? Nous sommes là pour vous aider
-            </h1>
-            <p className="text-lg text-gray-600">
-              Nos conseillers techniques vous accompagnent pour identifier les ravageurs,
-              diagnostiquer les problèmes phytosanitaires et vous proposer des solutions
-              biologiques adaptées.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHeader
+        breadcrumb={[{ label: 'Accompagnement technique' }]}
+        title={
+          <>
+            Un problème sur vos cultures ? Nous sommes là pour vous aider
+          </>
+        }
+        description={
+          <>
+            Nos conseillers techniques vous accompagnent pour identifier les ravageurs,
+            diagnostiquer les problèmes phytosanitaires et vous proposer des solutions
+            biologiques adaptées.
+          </>
+        }
+        actions={
+          <a href="#formulaire">
+            <Button>
+              Décrire mon problème <ArrowDown className="w-4 h-4" />
+            </Button>
+          </a>
+        }
+      />
 
       {/* How it works */}
-      <section className="section-padding bg-white">
+      <section className="section-first bg-white">
         <div className="container-wide">
           <h2 className="text-2xl font-bold text-gray-900 text-center mb-10">
             Comment ça marche ?
@@ -174,7 +179,7 @@ export default function AccompagnementTechniquePage() {
       </section>
 
       {/* Form */}
-      <section className="section-padding bg-gray-50">
+      <section id="formulaire" className="section-padding bg-gray-50 scroll-mt-20">
         <div className="container-narrow">
           {submitted ? (
             <div className="text-center py-12">
@@ -198,7 +203,7 @@ export default function AccompagnementTechniquePage() {
           ) : (
             <>
               <div className="text-center mb-8">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
                   Demander un accompagnement
                 </h2>
                 <p className="text-gray-600">
@@ -223,7 +228,7 @@ export default function AccompagnementTechniquePage() {
                       <div className="space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <Input
-                            label="Prenom"
+                            label="Prénom"
                             id="firstName"
                             placeholder="Votre prénom"
                             required
@@ -242,7 +247,7 @@ export default function AccompagnementTechniquePage() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <Input
-                            label="Telephone"
+                            label="Téléphone"
                             id="phone"
                             type="tel"
                             placeholder="+221 7X XXX XX XX"
@@ -290,7 +295,7 @@ export default function AccompagnementTechniquePage() {
                             {...register('locality')}
                           />
                           <Select
-                            label="Region"
+                            label="Région"
                             id="region"
                             placeholder="Sélectionnez une région"
                             options={SENEGAL_REGIONS.map((r) => ({ value: r, label: r }))}

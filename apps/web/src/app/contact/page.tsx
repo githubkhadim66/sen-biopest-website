@@ -23,6 +23,7 @@ import {
   Send,
 } from 'lucide-react';
 import { useSiteSettings, type SiteSettings } from '@/hooks/use-site-settings';
+import { PageHeader } from '@/components/layout/page-header';
 
 const contactSchema = z.object({
   name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
@@ -124,27 +125,22 @@ export default function ContactPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative bg-gradient-to-br from-primary-50 via-white to-green-50 overflow-hidden">
-        <div className="container-wide py-16 sm:py-20 lg:py-24">
-          <div className="max-w-3xl">
-            <nav aria-label="Fil d'Ariane" className="text-sm text-gray-500 mb-4">
-              <Link href="/" className="hover:text-gray-800">Accueil</Link>
-              <span className="mx-2" aria-hidden="true">/</span>
-              <span className="text-gray-700">Contact</span>
-            </nav>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-6">
-              Contactez-nous
-            </h1>
-            <p className="text-lg text-gray-600 max-w-2xl">
-              Une question, une demande de devis ou envie de collaborer ? Notre équipe est à votre écoute et vous répond sous 24h.
-            </p>
-          </div>
-        </div>
-        <div className="absolute right-0 top-0 w-1/3 h-full bg-gradient-to-l from-primary-100/40 to-transparent hidden lg:block" />
-      </section>
+      <PageHeader
+        breadcrumb={[{ label: 'Contact' }]}
+        title={
+          <>
+            Contactez-nous
+          </>
+        }
+        description={
+          <>
+            Une question, une demande de devis ou envie de collaborer ? Notre équipe est à votre écoute et vous répond sous 24h.
+          </>
+        }
+      />
 
       {/* Contact Info + Form */}
-      <section className="section-padding bg-white">
+      <section className="section-first bg-white">
         <div className="container-wide">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             {/* Contact Info */}

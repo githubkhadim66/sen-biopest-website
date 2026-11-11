@@ -7,7 +7,10 @@ import {
   FlaskConical,
   Handshake,
   ArrowRight,
+  Check,
 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/page-header';
+import { CtaCard } from '@/components/ui/cta-card';
 
 export const metadata: Metadata = {
   title: 'Nos services',
@@ -46,8 +49,8 @@ const services = [
       'Développement de nouvelles formulations',
       'Partenariats scientifiques et académiques',
     ],
-    href: '/services',
-    cta: 'En savoir plus',
+    href: '/contact',
+    cta: 'Nous contacter',
   },
   {
     icon: Handshake,
@@ -69,92 +72,69 @@ export default function ServicesPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative bg-gradient-to-br from-primary-50 via-white to-secondary-50 overflow-hidden">
-        <div className="container-wide py-16 sm:py-20 lg:py-28">
-          <div className="max-w-3xl">
-            <nav aria-label="Fil d'Ariane" className="text-sm text-gray-500 mb-4">
-              <Link href="/" className="hover:text-gray-800">Accueil</Link>
-              <span className="mx-2" aria-hidden="true">/</span>
-              <span className="text-gray-700">Services</span>
-            </nav>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-6">
-              Un accompagnement complet pour{' '}
-              <span className="text-primary-600">une agriculture durable</span>
-            </h1>
-            <p className="text-lg text-gray-600 max-w-2xl">
-              Au-delà de nos biopesticides, Sen Biopest vous accompagne avec des services de conseil technique, de recherche et de partenariat pour réussir votre transition vers une agriculture saine et productive.
-            </p>
-          </div>
-        </div>
-        <div className="absolute right-0 top-0 w-1/3 h-full bg-gradient-to-l from-primary-100/40 to-transparent hidden lg:block" />
-      </section>
+      <PageHeader
+        breadcrumb={[{ label: 'Services' }]}
+        title={
+          <>
+            Un accompagnement complet pour{' '}
+            <span className="text-primary-600">une agriculture durable</span>
+          </>
+        }
+        description={
+          <>
+            Au-delà de nos biopesticides, Sen Biopest vous accompagne avec des services de conseil technique, de recherche et de partenariat pour réussir votre transition vers une agriculture saine et productive.
+          </>
+        }
+      />
 
       {/* Services */}
-      <section className="section-padding bg-white">
-        <div className="container-wide space-y-16">
-          {services.map((service, index) => (
-            <div
-              key={service.title}
-              className={`grid grid-cols-1 lg:grid-cols-2 gap-12 items-center ${
-                index % 2 === 1 ? 'lg:flex-row-reverse' : ''
-              }`}
-            >
-              <div className={index % 2 === 1 ? 'lg:order-2' : ''}>
-                <div className="inline-flex items-center gap-2 text-primary-600 mb-4">
-                  <service.icon className="w-6 h-6" />
-                  <span className="text-sm font-medium uppercase tracking-wide">Service</span>
-                </div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">{service.title}</h2>
-                <p className="text-gray-600 leading-relaxed mb-6">{service.description}</p>
-                <ul className="space-y-3 mb-8">
-                  {service.highlights.map((item) => (
-                    <li key={item} className="flex items-start gap-2 text-sm text-gray-700">
-                      <ArrowRight className="w-4 h-4 text-primary-500 shrink-0 mt-0.5" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                <Link href={service.href}>
-                  <Button>
-                    {service.cta} <ArrowRight className="w-5 h-5" />
-                  </Button>
-                </Link>
-              </div>
-              <div className={index % 2 === 1 ? 'lg:order-1' : ''}>
-                <Card className="border-0 shadow-none">
-                  <div className="bg-gradient-to-br from-primary-50 to-secondary-50 rounded-2xl p-12 flex items-center justify-center min-h-[300px]">
-                    <service.icon className="w-28 h-28 text-primary-200" />
+      <section className="section-first bg-white">
+        <div className="container-wide">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {services.map((service) => (
+              <Card key={service.title} hover className="flex flex-col">
+                <CardBody className="flex flex-col flex-1 p-6">
+                  <div className="w-11 h-11 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center mb-4">
+                    <service.icon className="w-6 h-6" />
                   </div>
-                </Card>
-              </div>
-            </div>
-          ))}
+                  <h2 className="text-xl font-bold text-gray-900 mb-2">{service.title}</h2>
+                  <p className="text-sm text-gray-600 leading-relaxed mb-4">{service.description}</p>
+                  <ul className="space-y-2 mb-6">
+                    {service.highlights.map((item) => (
+                      <li key={item} className="flex items-start gap-2 text-sm text-gray-700">
+                        <Check className="w-4 h-4 text-primary-600 shrink-0 mt-0.5" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link href={service.href} className="mt-auto">
+                    <Button variant="outline" className="w-full">
+                      {service.cta} <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </Link>
+                </CardBody>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="section-padding bg-primary-600 text-white">
-        <div className="container-wide text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4">
-            Besoin d'un service sur mesure ?
-          </h2>
-          <p className="text-primary-100 max-w-xl mx-auto mb-8">
-            Contactez-nous pour discuter de vos besoins spécifiques. Nous construisons des solutions adaptées à chaque situation.
-          </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Link href="/contact">
-              <Button variant="secondary" size="lg">
-                Nous contacter <ArrowRight className="w-5 h-5" />
-              </Button>
-            </Link>
-            <Link href="/produits">
-              <Button variant="outline" size="lg" className="border-white text-white hover:bg-white/10">
-                Voir nos produits
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
+      <CtaCard
+        title="Besoin d'un service sur mesure ?"
+        description="Contactez-nous pour discuter de vos besoins spécifiques. Nous construisons des solutions adaptées à chaque situation."
+      >
+        <Link href="/contact">
+          <Button variant="secondary">
+            Nous contacter <ArrowRight className="w-4 h-4" />
+          </Button>
+        </Link>
+        <Link href="/produits">
+          <Button variant="outline" className="border-white text-white hover:bg-white/10">
+            Voir nos produits
+          </Button>
+        </Link>
+      </CtaCard>
     </>
   );
 }

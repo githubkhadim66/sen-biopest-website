@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { BrandLogo } from '@/components/ui/brand-logo';
 
 type Role = 'ADMIN' | 'COMMERCIAL' | 'CONSEILLER';
 const ALL: Role[] = ['ADMIN', 'COMMERCIAL', 'CONSEILLER'];
@@ -90,8 +91,8 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       >
         {/* Logo */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-800">
-          <Link href="/admin/dashboard" className="text-lg font-bold text-white">
-            Sen Biopest
+          <Link href="/admin/dashboard" aria-label="Tableau de bord">
+            <BrandLogo tone="dark" size={32} />
           </Link>
           <button
             className="lg:hidden text-gray-400 hover:text-white"

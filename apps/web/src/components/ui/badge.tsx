@@ -12,7 +12,8 @@ export function Badge({ children, className, variant = 'default' }: BadgeProps) 
     success: 'bg-green-100 text-green-800',
     warning: 'bg-yellow-100 text-yellow-800',
     danger: 'bg-red-100 text-red-800',
-    info: 'bg-blue-100 text-blue-800',
+    // Brand gold rather than an off-palette blue (green stays for success / in stock)
+    info: 'bg-secondary-100 text-secondary-800',
   };
 
   return (

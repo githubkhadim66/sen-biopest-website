@@ -75,11 +75,15 @@ export async function generateMetadata({
     };
   }
 
-  const title = product.metaTitle || `${product.name} — Biopesticide naturel`;
+  // The layout template already appends "| Sen Biopest": drop it from titles typed with it
+  const title = (product.metaTitle || `${product.name} — Biopesticide naturel`).replace(
+    /\s*[|—-]\s*Sen Biopest\s*$/i,
+    '',
+  );
   const description =
     product.metaDescription ||
     product.shortDescription ||
-    `Decouvrez ${product.name}, biopesticide naturel par Sen Biopest. ${product.shortDescription}`;
+    `Découvrez ${product.name}, biopesticide naturel par Sen Biopest. ${product.shortDescription}`;
 
   const ogImage = product.primaryImage || product.images?.[0]?.url;
 

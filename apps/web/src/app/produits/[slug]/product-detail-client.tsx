@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Leaf,
   ChevronRight,
   ChevronDown,
   CheckCircle,
@@ -22,6 +21,7 @@ import {
   HelpCircle,
   ArrowRight,
   ImageOff,
+  Maximize2,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { cn, getWhatsAppUrl } from '@/lib/utils';
@@ -30,6 +30,9 @@ import { Card, CardBody } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/hooks/use-cart';
 import { useSiteSettings } from '@/hooks/use-site-settings';
+import { BrandEmblem } from '@/components/ui/brand-logo';
+import { CtaCard } from '@/components/ui/cta-card';
+import { Lightbox } from '@/components/ui/lightbox';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -135,14 +138,15 @@ function resolveImageUrl(url: string): string {
 
 function ImageGallery({ images, name }: { images: { id: string; url: string; alt?: string; isPrimary: boolean; sortOrder: number }[]; name: string }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [zoomed, setZoomed] = useState(false);
   const imageUrls = images?.map((img) => resolveImageUrl(img.url)) || [];
 
   if (!images || images.length === 0) {
     return (
-      <div className="bg-gradient-to-br from-primary-50 to-green-50 rounded-xl flex items-center justify-center h-72 sm:h-96">
+      <div className="bg-gradient-to-br from-primary-50 to-secondary-50 rounded-xl flex items-center justify-center h-64 sm:h-80">
         <div className="text-center">
-          <Leaf className="w-24 h-24 text-primary-200 mx-auto mb-3" />
-          <p className="text-sm text-primary-400">Image a venir</p>
+          <BrandEmblem size={96} className="opacity-25 grayscale-[30%] mx-auto mb-3" />
+          <p className="text-sm text-gray-500">Photo à venir</p>
         </div>
       </div>
     );
@@ -151,13 +155,30 @@ function ImageGallery({ images, name }: { images: { id: string; url: string; alt
   return (
     <div className="space-y-3">
       {/* Main image */}
-      <div className="bg-gray-100 rounded-xl overflow-hidden h-72 sm:h-96">
+      <button
+        type="button"
+        onClick={() => setZoomed(true)}
+        aria-label="Agrandir la photo"
+        className="group relative block w-full bg-gradient-to-br from-primary-50 to-secondary-50 rounded-xl overflow-hidden h-80 sm:h-[28rem] cursor-zoom-in"
+      >
         <img
           src={imageUrls[selectedIndex]}
           alt={`${name} - photo ${selectedIndex + 1}`}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-[1.03]"
         />
-      </div>
+        <span className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm">
+          <Maximize2 className="w-3.5 h-3.5" /> Agrandir
+        </span>
+      </button>
+      {zoomed && (
+        <Lightbox
+          images={imageUrls}
+          index={selectedIndex}
+          alt={name}
+          onClose={() => setZoomed(false)}
+          onIndexChange={setSelectedIndex}
+        />
+      )}
       {/* Thumbnails */}
       {imageUrls.length > 1 && (
         <div className="flex gap-2 overflow-x-auto pb-1">
@@ -175,7 +196,7 @@ function ImageGallery({ images, name }: { images: { id: string; url: string; alt
               <img
                 src={img}
                 alt={`${name} miniature ${i + 1}`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain bg-white"
               />
             </button>
           ))}
@@ -228,17 +249,22 @@ function FAQAccordion({ faq }: { faq: { question: string; answer: string }[] }) 
 function RelatedProductCard({ product }: { product: RelatedProduct }) {
   return (
     <Card hover className="flex flex-col h-full">
-      <div className="h-40 bg-gradient-to-br from-primary-50 to-green-50 flex items-center justify-center overflow-hidden">
+      <Link
+        href={`/produits/${product.slug}`}
+        aria-label={`Voir la fiche ${product.name}`}
+        className="h-48 bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center overflow-hidden"
+      >
         {(product.primaryImage || (product.images && product.images.length > 0)) ? (
           <img
             src={resolveImageUrl(product.primaryImage || product.images[0]?.url || '')}
             alt={product.name}
-            className="w-full h-full object-cover"
+            loading="lazy"
+            className="w-full h-full object-contain p-3"
           />
         ) : (
-          <Leaf className="w-12 h-12 text-primary-200" />
+          <BrandEmblem size={48} className="opacity-25 grayscale-[30%]" />
         )}
-      </div>
+      </Link>
       <CardBody className="flex flex-col flex-1 gap-2">
         <Link
           href={`/produits/${product.slug}`}
@@ -299,20 +325,22 @@ function CTABlock({ product }: { product: ProductDetail }) {
 
   return (
     <div className="space-y-3">
-      <Link
-        href="/contact"
-        className="block"
-        onClick={() => trackClick('demander_devis', product.slug)}
-      >
-        <Button size="lg" className="w-full">
-          <FileText className="w-5 h-5" /> Demander un devis
+      {/* Two main actions side by side; the rest is secondary */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Button size="lg" className="w-full" onClick={handleAddToCart}>
+          <ShoppingCart className="w-5 h-5" />
+          {added ? 'Ajouté au panier !' : 'Ajouter au panier'}
         </Button>
-      </Link>
-
-      <Button size="lg" variant="secondary" className="w-full" onClick={handleAddToCart}>
-        <ShoppingCart className="w-5 h-5" />
-        {added ? 'Ajouté au panier !' : 'Ajouter au panier'}
-      </Button>
+        <Link
+          href="/contact"
+          className="block"
+          onClick={() => trackClick('demander_devis', product.slug)}
+        >
+          <Button size="lg" variant="outline" className="w-full">
+            <FileText className="w-5 h-5" /> Demander un devis
+          </Button>
+        </Link>
+      </div>
 
       <a
         href={whatsappDevis}
@@ -322,7 +350,9 @@ function CTABlock({ product }: { product: ProductDetail }) {
         onClick={() => trackClick('whatsapp_product', product.slug)}
       >
         <Button size="lg" variant="whatsapp" className="w-full">
-          <MessageCircle className="w-5 h-5" /> WhatsApp
+          <MessageCircle className="w-5 h-5" />
+          <span className="sm:hidden">Commander sur WhatsApp</span>
+          <span className="hidden sm:inline">Commander ou poser une question sur WhatsApp</span>
         </Button>
       </a>
 
@@ -330,12 +360,10 @@ function CTABlock({ product }: { product: ProductDetail }) {
         href={whatsappConseil}
         target="_blank"
         rel="noopener noreferrer"
-        className="block"
+        className="inline-flex items-center gap-1.5 text-sm text-primary-700 hover:text-primary-800 hover:underline"
         onClick={() => trackClick('demander_conseil', product.slug)}
       >
-        <Button size="lg" variant="outline" className="w-full">
-          <HelpCircle className="w-5 h-5" /> Demander conseil
-        </Button>
+        <HelpCircle className="w-4 h-4" /> Un doute sur l&apos;utilisation ? Demandez conseil à un agronome
       </a>
     </div>
   );
@@ -427,7 +455,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
               </div>
 
               {/* Name */}
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">
+              <h1 className="text-2xl sm:text-[1.75rem] lg:text-[2rem] font-extrabold tracking-tight text-gray-900">
                 {product.name}
               </h1>
 
@@ -490,7 +518,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
         <section className="section-padding bg-gray-50">
           <div className="container-narrow">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
-              Description detaillee
+              Description détaillée
             </h2>
             <div className="prose prose-gray max-w-none text-gray-700 leading-relaxed whitespace-pre-line">
               {product.description}
@@ -657,49 +685,34 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
       )}
 
       {/* ============ BOTTOM CTA ============ */}
-      <section className="section-padding bg-primary-600 text-white">
-        <div className="container-wide text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4">
-            Interesse(e) par {product.name} ?
-          </h2>
-          <p className="text-primary-100 max-w-xl mx-auto mb-8">
-            Contactez-nous pour un devis personnalise, une commande ou un
-            conseil d&apos;application. Notre equipe repond sous 24h.
-          </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Link
-              href="/contact"
-              onClick={() => trackClick('demander_devis_bottom', product.slug)}
-            >
-              <Button variant="secondary" size="lg">
-                <FileText className="w-5 h-5" /> Demander un devis
-              </Button>
-            </Link>
-            <a
-              href={getWhatsAppUrl(
-                WHATSAPP_NUMBER,
-                `Bonjour Sen Biopest, je suis interesse(e) par "${product.name}". Pouvez-vous me donner plus d'informations ?`,
-              )}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => trackClick('whatsapp_bottom', product.slug)}
-            >
-              <Button variant="whatsapp" size="lg">
-                <MessageCircle className="w-5 h-5" /> WhatsApp
-              </Button>
-            </a>
-            <Link href="/produits">
-              <Button
-                variant="outline"
-                size="lg"
-                className="border-white text-white hover:bg-white/10"
-              >
-                Voir tous les produits
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
+      <CtaCard
+        title={<>Intéressé(e) par {product.name} ?</>}
+        description="Contactez-nous pour un devis personnalisé, une commande ou un conseil d'application. Notre équipe répond sous 24h."
+      >
+        <Link href="/contact" onClick={() => trackClick('demander_devis_bottom', product.slug)}>
+          <Button variant="secondary">
+            <FileText className="w-4 h-4" /> Demander un devis
+          </Button>
+        </Link>
+        <a
+          href={getWhatsAppUrl(
+            WHATSAPP_NUMBER,
+            `Bonjour Sen Biopest, je suis intéressé(e) par "${product.name}". Pouvez-vous me donner plus d'informations ?`,
+          )}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => trackClick('whatsapp_bottom', product.slug)}
+        >
+          <Button variant="whatsapp">
+            <MessageCircle className="w-4 h-4" /> WhatsApp
+          </Button>
+        </a>
+        <Link href="/produits">
+          <Button variant="outline" className="border-white text-white hover:bg-white/10">
+            Voir tous les produits
+          </Button>
+        </Link>
+      </CtaCard>
     </>
   );
 }
