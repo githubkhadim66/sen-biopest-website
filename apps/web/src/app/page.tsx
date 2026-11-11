@@ -310,10 +310,10 @@ export default function HomePage() {
           <h2 className="sr-only">Notre impact</h2>
           <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {[
-              { value: '500+', label: 'Producteurs accompagnés' },
-              { value: '14', label: 'Régions couvertes' },
+              { value: '150', label: 'Producteurs accompagnés' },
+              { value: '3', label: 'Régions couvertes' },
               { value: '100%', label: 'Ingrédients naturels' },
-              { value: '30%', label: 'Réduction des pertes' },
+              { value: '60%', label: 'Réduction des pertes' },
             ].map((stat) => (
               <StaggerItem key={stat.label}>
                 <div className="rounded-xl bg-primary-50/70 border border-primary-100 px-4 py-4 text-center">

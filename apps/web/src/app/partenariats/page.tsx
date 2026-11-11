@@ -179,10 +179,10 @@ export default function PartenariatsPage() {
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 max-w-4xl mx-auto">
             {[
-              { value: '500+', label: 'Producteurs accompagnés' },
-              { value: '14', label: 'Régions couvertes' },
+              { value: '150', label: 'Producteurs accompagnés' },
+              { value: '3', label: 'Régions couvertes' },
               { value: '100%', label: 'Solutions biologiques' },
-              { value: '30%', label: 'Réduction des pertes' },
+              { value: '60%', label: 'Réduction des pertes' },
             ].map((stat) => (
               <div key={stat.label} className="rounded-xl bg-primary-50/70 border border-primary-100 px-4 py-4 text-center">
                 <div className="text-2xl font-bold text-primary-700 font-display">{stat.value}</div>

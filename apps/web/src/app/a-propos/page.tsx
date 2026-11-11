@@ -55,10 +55,10 @@ const values = [
 ];
 
 const stats = [
-  { value: '500+', label: 'Producteurs accompagnés' },
-  { value: '14', label: 'Régions du Sénégal couvertes' },
+  { value: '150', label: 'Producteurs accompagnés' },
+  { value: '3', label: 'Régions du Sénégal couvertes' },
   { value: '100%', label: 'Ingrédients naturels et locaux' },
-  { value: '30%', label: 'Réduction moyenne des pertes' },
+  { value: '60%', label: 'Réduction moyenne des pertes' },
   { value: '10+', label: 'Formulations développées' },
   { value: '50+', label: 'Sessions de formation réalisées' },
 ];
