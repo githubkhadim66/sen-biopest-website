@@ -45,7 +45,7 @@ export class CreateTechnicalRequestDto {
   @IsString()
   description?: string;
 
-  @IsBoolean()
+  @IsBoolean({ message: 'Veuillez accepter le traitement de vos données pour envoyer le formulaire' })
   consent: boolean;
 
   /** URLs returned by POST /uploads/single */

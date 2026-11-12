@@ -60,7 +60,7 @@ export class CreateCommercialRequestDto {
   @IsString()
   message?: string;
 
-  @IsBoolean()
+  @IsBoolean({ message: 'Veuillez accepter le traitement de vos données pour envoyer le formulaire' })
   consent: boolean;
 
   @IsOptional()

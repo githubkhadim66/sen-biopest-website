@@ -27,7 +27,7 @@ export class CreateContactDto {
   @MaxLength(5000)
   message: string;
 
-  @IsBoolean()
+  @IsBoolean({ message: 'Veuillez accepter le traitement de vos données pour envoyer le formulaire' })
   consent: boolean;
 }
 

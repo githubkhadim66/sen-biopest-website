@@ -111,6 +111,7 @@ export default function ContactPage() {
         email: data.email,
         subject: data.subject,
         message: data.message,
+        consent: data.consent,
       });
       setSubmitStatus('success');
       reset();
