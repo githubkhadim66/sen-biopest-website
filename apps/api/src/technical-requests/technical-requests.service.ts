@@ -9,12 +9,16 @@ import {
 import { Prisma } from '@prisma/client';
 import { paginate } from '../common/dto/pagination.dto';
 
+import { MailService } from '../mail/mail.service';
 @Injectable()
 export class TechnicalRequestsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mail: MailService,
+  ) {}
 
   async create({ photos, ...dto }: CreateTechnicalRequestDto) {
-    return this.prisma.technicalRequest.create({
+    const request = await this.prisma.technicalRequest.create({
       data: {
         ...dto,
         photos: photos?.length
@@ -23,6 +27,26 @@ export class TechnicalRequestsService {
       },
       include: { photos: true },
     });
+    this.mail.notify({
+      subject: `Demande d'accompagnement technique — ${dto.crop}`,
+      intro: "Nouvelle demande d'accompagnement technique reçue depuis le site.",
+      fields: [
+        ['Nom', `${dto.firstName} ${dto.lastName}`],
+        ['Téléphone', dto.phone],
+        ['E-mail', dto.email],
+        ['Organisation', dto.organization],
+        ['Localité', [dto.locality, dto.region].filter(Boolean).join(', ')],
+        ['Culture', dto.crop],
+        ['Stade', dto.cropStage],
+        ['Symptômes', dto.symptoms],
+        ['Description', dto.description],
+        ['Photos', photos?.length ? `${photos.length} photo(s), visibles dans l'administration` : null],
+      ],
+      adminPath: '/admin/demandes-techniques',
+      customerEmail: dto.email,
+      customerMessage: 'Nous avons bien reçu votre demande. Un conseiller agronome vous contacte rapidement.',
+    });
+    return request;
   }
 
   async addPhotos(id: string, files: Array<{ url: string; filename: string }>) {

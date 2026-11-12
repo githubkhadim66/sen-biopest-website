@@ -13,9 +13,13 @@ const toSlug = (value: string) => slugify(value, { lower: true, strict: true }) 
 // Cancelled registrations free their seat
 const activeRegistrations = { where: { status: { not: 'ANNULE' as const } } };
 
+import { MailService } from '../mail/mail.service';
 @Injectable()
 export class TrainingsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mail: MailService,
+  ) {}
 
   async findAllPublic() {
     const trainings = await this.prisma.training.findMany({
@@ -123,7 +127,29 @@ export class TrainingsService {
       throw new BadRequestException('Vous êtes déjà inscrit(e) à cette formation avec ce numéro');
     }
 
-    return this.prisma.trainingRegistration.create({ data: dto });
+    const registration = await this.prisma.trainingRegistration.create({ data: dto });
+    const when = training.date
+      ? training.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+      : null;
+    this.mail.notify({
+      subject: `Nouvelle inscription — ${training.title}`,
+      intro: `Nouvelle inscription à la formation « ${training.title} ».`,
+      fields: [
+        ['Formation', training.title],
+        ['Date', when],
+        ['Nom', `${dto.firstName} ${dto.lastName}`],
+        ['Téléphone', dto.phone],
+        ['E-mail', dto.email],
+        ['Organisation', dto.organization],
+        ['Localité', [dto.locality, dto.region].filter(Boolean).join(', ')],
+        ['Motivation', dto.motivation],
+        ['Inscrits', `${training._count.registrations + 1}${training.maxParticipants ? ` / ${training.maxParticipants}` : ''}`],
+      ],
+      adminPath: '/admin/formations',
+      customerEmail: dto.email,
+      customerMessage: `Votre inscription à la formation « ${training.title} »${when ? ` du ${when}` : ''} est bien enregistrée. Nous vous recontactons avec les informations pratiques.`,
+    });
+    return registration;
   }
 
   async getRegistrations(trainingId: string) {

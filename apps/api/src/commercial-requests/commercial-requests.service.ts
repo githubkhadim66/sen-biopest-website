@@ -9,12 +9,46 @@ import {
 import { Prisma } from '@prisma/client';
 import { paginate } from '../common/dto/pagination.dto';
 
+import { MailService } from '../mail/mail.service';
+
+const COMMERCIAL_LABELS: Record<string, string> = {
+  DEVIS: 'Nouvelle demande de devis',
+  COMMANDE: 'Nouvelle commande',
+  RAPPEL: 'Demande de rappel',
+  INFORMATION: "Demande d'information",
+  ECHANTILLON: "Demande d'échantillon",
+};
 @Injectable()
 export class CommercialRequestsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mail: MailService,
+  ) {}
 
   async create(dto: CreateCommercialRequestDto) {
-    return this.prisma.commercialRequest.create({ data: dto });
+    const request = await this.prisma.commercialRequest.create({ data: dto });
+    const label = COMMERCIAL_LABELS[dto.type] ?? 'Nouvelle demande commerciale';
+    this.mail.notify({
+      subject: `${label} — ${dto.firstName} ${dto.lastName}`,
+      intro: `${label} reçue depuis le site.`,
+      fields: [
+        ['Nom', `${dto.firstName} ${dto.lastName}`],
+        ['Téléphone', dto.phone],
+        ['E-mail', dto.email],
+        ['Organisation', dto.organization],
+        ['Localité', [dto.locality, dto.region].filter(Boolean).join(', ')],
+        ['Produit(s)', dto.productInterest],
+        ['Quantité', dto.quantity],
+        ['Message', dto.message],
+      ],
+      adminPath: dto.type === 'COMMANDE' ? '/admin/commandes' : '/admin/demandes-commerciales',
+      customerEmail: dto.email,
+      customerMessage:
+        dto.type === 'COMMANDE'
+          ? 'Nous avons bien reçu votre commande. Un membre de notre équipe vous contacte rapidement pour confirmer la livraison et le paiement.'
+          : undefined,
+    });
+    return request;
   }
 
   async findAll(query: CommercialRequestQueryDto) {

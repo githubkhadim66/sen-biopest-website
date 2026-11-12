@@ -109,7 +109,7 @@ export default function ConfidentialitePage() {
                 <li><strong>Droit de limitation :</strong> demander la limitation du traitement</li>
               </ul>
               <p className="text-gray-600 leading-relaxed mt-2">
-                Pour exercer ces droits, contactez-nous à : <a href="mailto:contact@senbiopest.sn" className="text-primary-600 hover:underline">contact@senbiopest.sn</a>
+                Pour exercer ces droits, contactez-nous à : <a href="mailto:contact@senbiopest.com" className="text-primary-600 hover:underline">contact@senbiopest.com</a>
               </p>
             </div>
 
@@ -149,7 +149,7 @@ export default function ConfidentialitePage() {
               </p>
               <p className="text-gray-600 mt-2">
                 <strong>Sen Biopest</strong><br />
-                Email : <a href="mailto:contact@senbiopest.sn" className="text-primary-600 hover:underline">contact@senbiopest.sn</a><br />
+                Email : <a href="mailto:contact@senbiopest.com" className="text-primary-600 hover:underline">contact@senbiopest.com</a><br />
                 Téléphone : +221 77 000 00 00<br />
                 Adresse : Dakar, Sénégal
               </p>

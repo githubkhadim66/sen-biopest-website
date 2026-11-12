@@ -15,6 +15,7 @@ import { ContentModule } from './content/content.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { HealthModule } from './health/health.module';
+import { MailModule } from './mail/mail.module';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
 import { UPLOAD_DIR } from './uploads/multer.config';
 
@@ -28,6 +29,7 @@ import { UPLOAD_DIR } from './uploads/multer.config';
     // 120 requests / minute / IP by default; public forms and login are stricter
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
     PrismaModule,
+    MailModule,
     AuthModule,
     ProductsModule,
     CommercialRequestsModule,

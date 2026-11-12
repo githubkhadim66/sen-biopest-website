@@ -38,12 +38,31 @@ export class ContactQueryDto extends PaginationDto {
   unread?: boolean;
 }
 
+import { MailService } from '../mail/mail.service';
 @Injectable()
 export class ContactService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mail: MailService,
+  ) {}
 
   async create(dto: CreateContactDto) {
-    return this.prisma.contactRequest.create({ data: dto });
+    const message = await this.prisma.contactRequest.create({ data: dto });
+    this.mail.notify({
+      subject: `Nouveau message — ${dto.subject || dto.name}`,
+      intro: 'Nouveau message reçu depuis le formulaire de contact.',
+      fields: [
+        ['Nom', dto.name],
+        ['Téléphone', dto.phone],
+        ['E-mail', dto.email],
+        ['Sujet', dto.subject],
+        ['Message', dto.message],
+      ],
+      adminPath: '/admin/messages',
+      customerEmail: dto.email,
+      customerMessage: 'Nous avons bien reçu votre message et nous vous répondrons dans les meilleurs délais.',
+    });
+    return message;
   }
 
   async findAll(query: ContactQueryDto) {

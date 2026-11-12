@@ -99,6 +99,22 @@ Les produits et contenus saisis dans ce mode sont **conservés** au passage au d
    ```
    Le site passe en `https://votre-domaine`, avec certificat. Vos données sont conservées.
 
+## Recevoir les demandes par e-mail
+
+À chaque commande, devis, message, demande technique, partenariat ou inscription à une formation, le site envoie un e-mail à l'adresse de contact, et un accusé de réception au visiteur s'il a donné son e-mail.
+
+1. Créez l'adresse chez OVH (Web Cloud › Zimbra Mail), par exemple contact@senbiopest.com.
+2. Sur le serveur, ajoutez ces lignes à la fin du fichier .env (`nano .env`) avec le mot de passe de cette adresse :
+   ```
+   SMTP_HOST=smtp.mail.ovh.net
+   SMTP_PORT=465
+   SMTP_USER=contact@senbiopest.com
+   SMTP_PASS=le-mot-de-passe-de-l-adresse
+   ```
+3. Relancez : `bash deploy/deploy.sh --no-pull`.
+
+Sans ces lignes, le site fonctionne normalement ; les demandes restent visibles dans l'administration, sans e-mail. Pour vérifier : `docker compose -f docker/docker-compose.yml --env-file .env logs api | grep -i mail`.
+
 ## Au quotidien
 
 | Besoin | Commande (dans `/opt/senbiopest`) |

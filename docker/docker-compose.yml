@@ -35,6 +35,14 @@ services:
       # false only in the temporary IP mode (no HTTPS): the session cookie must then travel over HTTP
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
       UPLOAD_DIR: /app/uploads
+      SITE_URL: ${SITE_SCHEME:-https}://${DOMAIN}
+      # E-mail notifications (optional): OVH Zimbra = smtp.mail.ovh.net, port 465
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      NOTIFY_EMAIL: ${NOTIFY_EMAIL:-}
     depends_on:
       db:
         condition: service_healthy

@@ -9,12 +9,35 @@ import {
 import { Prisma } from '@prisma/client';
 import { paginate } from '../common/dto/pagination.dto';
 
+import { MailService } from '../mail/mail.service';
 @Injectable()
 export class PartnershipsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mail: MailService,
+  ) {}
 
   async create(dto: CreatePartnershipRequestDto) {
-    return this.prisma.partnershipRequest.create({ data: dto });
+    const request = await this.prisma.partnershipRequest.create({ data: dto });
+    this.mail.notify({
+      subject: `Nouvelle demande de partenariat — ${dto.organizationName}`,
+      intro: 'Nouvelle demande de partenariat reçue depuis le site.',
+      fields: [
+        ['Organisation', dto.organizationName],
+        ['Type', dto.partnerType],
+        ['Contact', dto.contactName],
+        ['Téléphone', dto.phone],
+        ['E-mail', dto.email],
+        ['Site web', dto.website],
+        ['Localité', [dto.locality, dto.region].filter(Boolean).join(', ')],
+        ['Proposition', dto.proposal],
+        ['Objectifs', dto.objectives],
+      ],
+      adminPath: '/admin/partenariats',
+      customerEmail: dto.email,
+      customerMessage: "Nous avons bien reçu votre proposition de partenariat. Notre équipe l'étudie et revient vers vous rapidement.",
+    });
+    return request;
   }
 
   async findAll(query: PartnershipQueryDto) {
